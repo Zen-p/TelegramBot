@@ -1,41 +1,65 @@
 package org.example.bot;
 
+import org.example.bot.Object.Person;
 import org.example.bot.config.Logic_realisation;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+
+import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.util.Collections;
-import java.util.List;
 
 public class TelegramBot extends TelegramLongPollingBot{
 
-
-
     @Override
     public void onUpdateReceived(Update update) {
-        String chatId = update.getMessage().getChatId().toString();
-        String text = update.getMessage().getText();
+        Person person = new Person();
+        Logic_realisation logic = new Logic_realisation();
         SendMessage sendMessage = new SendMessage();
-        sendMessage.setChatId(chatId);
+        long chatId = 0;
 
-        if (text.equals("/start")) {
-            sendMessage.setText("Добро пожаловать в нашу парикмахерскую!\n" +
-                    "Мы рады видеть вас и готовы помочь вам записаться на услуги парикмахера");
-            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-            Logic_realisation logic = new Logic_realisation();
-            markupInline.setKeyboard(Collections.singletonList((List<InlineKeyboardButton>) logic.getRowInline()));
-            sendMessage.setReplyMarkup(markupInline);
+        if (update.hasMessage()) {
+            chatId = update.getMessage().getChatId();
+            person.setId(chatId);
+            System.out.println(person.getId());
+            sendMessage.setChatId(chatId);
 
+            if (update.getMessage().getText().equals("/start")) {
+                logic.showHelloMessage(sendMessage);
+                System.out.println(chatId);
+            }
 
+            else if (update.getMessage().getText().equals("adminNikita")) {
+                sendMessage.setText("Добро пожаловать, чурка");
 
+            }
+        } else if (update.hasCallbackQuery()) {
+            chatId = update.getCallbackQuery().getMessage().getChatId();
+            sendMessage.setChatId(chatId);
 
-        }
-        else {
-            sendMessage.setText(null);
+            if (update.getCallbackQuery().getData().equals("signup")) {
+                sendMessage.setText("вы в очереди");
+                System.out.println(chatId);
+            }
+
+            else if (update.getCallbackQuery().getData().equals("workTime")) {
+                sendMessage.setText("Я КАМЕНЩИК РАБОТАЮ ТРИ ДНЯ ААААААААА");
+                System.out.println(chatId);
+            }
+
+            else if (update.getCallbackQuery().getData().equals("portfolio")) {
+                SendPhoto sendPhoto = new SendPhoto();
+                sendPhoto.setChatId(chatId);
+                sendPhoto.setPhoto(new InputFile("https://clck.ru/3Cx6Bx"));
+                try {
+                    execute(sendPhoto);
+                } catch (TelegramApiException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
 
@@ -46,7 +70,16 @@ public class TelegramBot extends TelegramLongPollingBot{
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
-    }
+
+
+        }
+
+
+
+
+
+
+
 
     @Override
     public String getBotUsername() {
