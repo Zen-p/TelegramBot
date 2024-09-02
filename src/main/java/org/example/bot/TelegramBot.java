@@ -15,22 +15,19 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 
-public class TelegramBot extends TelegramLongPollingBot{
+public class TelegramBot extends TelegramLongPollingBot {
     @Override
     public String getBotUsername() {
         return "BarberAssist_bot";
     }
+
     @Override
-    public String getBotToken () {
+    public String getBotToken() {
         return "7214428459:AAF_rPscG7Q6x3eZa8j5Hj4g-a7KKq4fLSM";
     }
+
     @Override
     public void onUpdateReceived(Update update) {
-try{
-    //System.out.println(update.getMessage().getText());
-} catch (Exception e ) {
-    throw e;
-}
         PersonDAO dao = new PersonDAO();
         Logic_realisation logic = new Logic_realisation();
         SendMessage sendMessage = new SendMessage();
@@ -42,12 +39,7 @@ try{
 
             if (update.getMessage().getText().equals("/start")) {
                 logic.showHelloMessage(sendMessage);
-            }
-
-
-
-
-            else if (update.getMessage().getText().equals("Дядя Толик")) {
+            } else if (update.getMessage().getText().equals("Дядя Толик")) {
                 ForAdmin forAdmin = new ForAdmin();
                 forAdmin.onAdminLogin(update, sendMessage);
 
@@ -58,21 +50,13 @@ try{
 
             if (update.getCallbackQuery().getData().equals("signup")) {
                 logic.onSignUp(sendMessage);
-            }
-
-            else if (update.getCallbackQuery().getData().equals("workTime")) {
+            } else if (update.getCallbackQuery().getData().equals("workTime")) {
                 logic.showWorkTime(sendMessage);
-            }
-
-            else if (update.getCallbackQuery().getData().equals("queueForFirstDay")) {
-                    logic.showRegisterMenu(sendMessage);
+            } else if (update.getCallbackQuery().getData().equals("queueForFirstDay")) {
+                logic.showRegisterMenu(sendMessage);
 
 
-
-            }
-
-
-            else if (update.getCallbackQuery().getData().equals("portfolio")) {
+            } else if (update.getCallbackQuery().getData().equals("portfolio")) {
                 SendPhoto sendPhoto = new SendPhoto();
                 sendPhoto.setChatId(chatId);
                 sendPhoto.setPhoto(new InputFile("https://clck.ru/3Cx75s"));
@@ -93,12 +77,7 @@ try{
         }
 
 
-        }
-
-
-
-
-
+    }
 
 
 }
