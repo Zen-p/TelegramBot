@@ -1,20 +1,20 @@
 package org.example.bot.Object;
 
 public class Person {
-    private static long id;
+    private static long chatId;
     private String nameAndSurname;
 
     public Person(long id, String nameAndSurname) {
+        this.chatId = id;
         this.nameAndSurname = nameAndSurname;
-        this.id = id;
     }
 
     public static long getId() {
-        return id;
+        return chatId;
     }
 
     public static void setId(long id) {
-        Person.id = id;
+        Person.chatId = id;
     }
 
     public String getNameAndSurname() {
