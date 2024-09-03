@@ -3,3 +3,16 @@
 //                    "какие-либо вопросы или потребуется дополнительная " +
 //                    "информация, не стесняйтесь обращаться к нам. Удачного" +
 //                    " дня! \uD83C\uDF1E\n\nВаше место в очереди: 1");
+
+System.out.println(update.getMessage().getText());
+                System.out.println(update.getMessage().getFrom().getUserName());
+
+
+                Calendar calendar = Calendar.getInstance();
+                                int daysUntilMonday = Calendar.MONDAY - calendar.get(Calendar.DAY_OF_WEEK);
+                                if (daysUntilMonday <= 0) {
+                                    daysUntilMonday += 7;
+                                }
+                                calendar.add(Calendar.DAY_OF_MONTH, daysUntilMonday);
+                                SimpleDateFormat sdf = new SimpleDateFormat("E, d MMM yyy");
+                                System.out.println(sdf.format(calendar.getTime()));

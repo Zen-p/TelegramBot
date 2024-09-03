@@ -1,20 +1,22 @@
 package org.example.bot.dao;
 
-import com.sun.security.jgss.GSSUtil;
 import org.example.bot.Object.Person;
 
-import org.example.bot.TelegramBot;
-import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-
-import java.util.*;
+import java.util.LinkedList;
+import java.util.List;
 
 
 public class PersonDAO {
 
-    int barberId;
+    private long chatId;
+
+    public long getChatId() {
+        return chatId;
+    }
+
+    public void setChatId(long chatId) {
+        this.chatId = chatId;
+    }
 
     List<Person> bookedForMonday;
     List<Person> bookedForWednesday;
@@ -23,20 +25,35 @@ public class PersonDAO {
         bookedForMonday = new LinkedList<>();
         bookedForWednesday = new LinkedList<>();
 
+        bookedForMonday.add(new Person(39846349867l, "Peter Fridge"));
+        bookedForMonday.add(new Person(34658734563l, "Matvei Macevich"));
+        bookedForMonday.add(new Person(43653483468l, "Egor Karpovich"));
+        bookedForMonday.add(new Person(37465438755l, "kirill Shirko"));
+
+
+        bookedForWednesday.add(new Person(38456834454l, "Egor Kluch"));
+        bookedForWednesday.add(new Person(34567875647l, "Egor Shishko"));
+        bookedForWednesday.add(new Person(90873458745l, "Narbut Alex"));
+        bookedForWednesday.add(new Person(76276345867l, "kirill Manul"));
+
     }
 
-    public void register(long chatId, SendMessage sendMessage, Update update) {
-        Calendar calendar = new GregorianCalendar();
-        if (calendar.get(Calendar.DAY_OF_WEEK) == 2) {
-            sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
-            TelegramBot bot = new TelegramBot();
-            try {
-                bot.execute(sendMessage);
-            } catch (TelegramApiException e) {
-                throw new RuntimeException(e);
-            }
 
-
-        }
+    public void addNewUserForMonday (Person person) {
+        bookedForMonday.add(person);
     }
+
+
+    public int getMondaySize() {
+        return bookedForMonday.size();
+    }
+    public int getWednesdaySize() {
+        return bookedForWednesday.size();
+    }
+
+
+
+
+
+
 }

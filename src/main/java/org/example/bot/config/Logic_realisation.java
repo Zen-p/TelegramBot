@@ -1,11 +1,11 @@
 package org.example.bot.config;
 
 import org.example.bot.TelegramBot;
+import org.example.bot.dao.PersonDAO;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-
+import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -13,7 +13,7 @@ import java.util.*;
 
 public class Logic_realisation {
 
-    public void showHelloMessage(SendMessage sendMessage) {
+    public void showHelloMessage(SendMessage sendMessage, Update update) {
         sendMessage.setText("Добро пожаловать в нашу парикмахерскую!\n" +
                 "Мы рады видеть вас и готовы помочь вам записаться на услуги парикмахера");
 
@@ -49,6 +49,13 @@ public class Logic_realisation {
         markupInline.setKeyboard(rowsInline);
         sendMessage.setReplyMarkup(markupInline);
 
+        try {
+            Thread.sleep(10000);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+
+
     }
 
     public void showWorkTime(SendMessage sendMessage) {
@@ -60,10 +67,10 @@ public class Logic_realisation {
                 "Мы всегда рады помочь! \uD83D\uDE0A");
     }
 
-    public void onSignUp(SendMessage sendMessage) {
-        boolean isAvvailable = false;
+    public void onSignUp(SendMessage sendMessage, PersonDAO dao) {
 
-        if (!isAvvailable) {
+        if (dao.getMondaySize() < 5 || dao.getWednesdaySize() < 5) {
+
 
             sendMessage.setText("Пожалуйста, выберите подходящую для вас дату");
 
@@ -71,23 +78,28 @@ public class Logic_realisation {
             DateFormat df = new SimpleDateFormat("E, d MMM yyy");
 
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
 
-            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+            List<InlineKeyboardButton> rowInline1 = new ArrayList<>();
+            List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
 
             InlineKeyboardButton firstAvvailable = new InlineKeyboardButton();
-            firstAvvailable.setText(df.format(calendar.getTime()));
+            firstAvvailable.setText(df.format(calendar.getTime()) + (", доступно мест: " + (5 - dao.getMondaySize())));
             firstAvvailable.setCallbackData("queueForFirstDay");
+
             calendar.roll(Calendar.DAY_OF_WEEK, +2);
             InlineKeyboardButton secondAvvailable = new InlineKeyboardButton();
-            secondAvvailable.setText(df.format(calendar.getTime()));
+            secondAvvailable.setText(df.format(calendar.getTime()) + (", доступно мест: " + (5 - dao.getMondaySize())));
             secondAvvailable.setCallbackData("queueForFirstDay");
-            rowInline.add(firstAvvailable);
-            rowInline.add(secondAvvailable);
 
-            markupInline.setKeyboard(Collections.singletonList(rowInline));
+            rowInline1.add(firstAvvailable);
+            rowInline2.add(secondAvvailable);
+            rowsInline.add(rowInline1);
+            rowsInline.add(rowInline2);
+            markupInline.setKeyboard(rowsInline);
             sendMessage.setReplyMarkup(markupInline);
 
-        } else if (!isAvvailable) {
+        } else {
             sendMessage.setText("К сожалению, все места уже заняты \uD83D\uDE14. Но не переживайте! " +
                     "Вы можете встать в очередь и мы обязательно найдем для вас время. Как вам такая идея? \uD83D\uDD52");
 
@@ -107,16 +119,14 @@ public class Logic_realisation {
         }
     }
 
-    public void showRegisterMenu(SendMessage sendMessage) {
+    public void showRegisterMenu(SendMessage sendMessage, PersonDAO dao) {
         Calendar calendar = new GregorianCalendar();
-        if (calendar.get(Calendar.DAY_OF_WEEK) == 2) {
+        if (calendar.get(Calendar.DAY_OF_WEEK) == 3) {
+
             sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
             TelegramBot bot = new TelegramBot();
-            try {
-                bot.execute(sendMessage);
-            } catch (TelegramApiException e) {
-                throw new RuntimeException(e);
-            }
+            bot.setKey("R9&zK2@Lp1");
+
 
 
         }
