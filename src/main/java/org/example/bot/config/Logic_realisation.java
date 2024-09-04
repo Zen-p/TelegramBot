@@ -3,17 +3,24 @@ package org.example.bot.config;
 import org.example.bot.TelegramBot;
 import org.example.bot.dao.PersonDAO;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collections;
+import java.util.List;
+
 
 public class Logic_realisation {
 
-    public void showHelloMessage(SendMessage sendMessage, Update update) {
+    public void showHelloMessage(SendMessage sendMessage) {
         sendMessage.setText("Добро пожаловать в нашу парикмахерскую!\n" +
                 "Мы рады видеть вас и готовы помочь вам записаться на услуги парикмахера");
 
@@ -25,12 +32,9 @@ public class Logic_realisation {
         InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
         inlineKeyboardButton1.setText("Записаться");
         inlineKeyboardButton1.setCallbackData("signup");
-        InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
-        inlineKeyboardButton2.setText("Просмотреть очередь");
-        inlineKeyboardButton2.setCallbackData("see_the_queue");
 
         rowInline_1.add(inlineKeyboardButton1);
-        rowInline_1.add(inlineKeyboardButton2);
+
 
         List<InlineKeyboardButton> rowInline_2 = new ArrayList<>();
 
@@ -49,13 +53,6 @@ public class Logic_realisation {
         markupInline.setKeyboard(rowsInline);
         sendMessage.setReplyMarkup(markupInline);
 
-        try {
-            Thread.sleep(10000);
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
-
-
     }
 
     public void showWorkTime(SendMessage sendMessage) {
@@ -71,10 +68,18 @@ public class Logic_realisation {
 
         if (dao.getMondaySize() < 5 || dao.getWednesdaySize() < 5) {
 
+            Calendar calendar = Calendar.getInstance();
+            int daysUntilMonday = Calendar.MONDAY - calendar.get(Calendar.DAY_OF_WEEK);
+            if (daysUntilMonday <= 0) {
+                daysUntilMonday += 7;
+            }
+            calendar.add(Calendar.DAY_OF_MONTH, daysUntilMonday);
+            SimpleDateFormat sdf = new SimpleDateFormat("E, d MMM yyy");
+
 
             sendMessage.setText("Пожалуйста, выберите подходящую для вас дату");
 
-            Calendar calendar = new GregorianCalendar();
+
             DateFormat df = new SimpleDateFormat("E, d MMM yyy");
 
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
@@ -90,7 +95,7 @@ public class Logic_realisation {
             calendar.roll(Calendar.DAY_OF_WEEK, +2);
             InlineKeyboardButton secondAvvailable = new InlineKeyboardButton();
             secondAvvailable.setText(df.format(calendar.getTime()) + (", доступно мест: " + (5 - dao.getMondaySize())));
-            secondAvvailable.setCallbackData("queueForFirstDay");
+            secondAvvailable.setCallbackData("queueForSecondDay");
 
             rowInline1.add(firstAvvailable);
             rowInline2.add(secondAvvailable);
@@ -119,16 +124,14 @@ public class Logic_realisation {
         }
     }
 
-    public void showRegisterMenu(SendMessage sendMessage, PersonDAO dao) {
-        Calendar calendar = new GregorianCalendar();
-        if (calendar.get(Calendar.DAY_OF_WEEK) == 3) {
+    public void showRegisterMenu(SendMessage sendMessage) {
 
-            sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
-            TelegramBot bot = new TelegramBot();
-            bot.setKey("R9&zK2@Lp1");
+        sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
+        TelegramBot bot = new TelegramBot();
+        bot.setKey("R9&zK2@Lp1");
 
 
-
-        }
     }
+
+
 }

@@ -13,7 +13,7 @@ public class Person {
         this.nameAndSurname = nameAndSurname;
     }
 
-    public Person(String telegramUsername, int serialNumber, long chatId, String nameAndSurname) {
+    public Person(String telegramUsername, long chatId, String nameAndSurname) {
         this.telegramUsername = telegramUsername;
         this.serialNumber = serialNumber;
         this.chatId = chatId;
@@ -54,7 +54,7 @@ public class Person {
 
     @Override
     public String toString() {
-        return ("telegram Username: " + this.gettelegramUsername() +"\nserialNumber: " + this.getSerialNumber() + "\n" +
-                "chat id: " + chatId + "\nname and surname: " + nameAndSurname + "\n ____________________________________");
+        return ("telegram Username: @" + this.gettelegramUsername() + "\nserialNumber: " + this.getSerialNumber() + "\n" +
+                "chat id: " + chatId + "\nname and surname: " + nameAndSurname + "\n___________________________________");
     }
 }

@@ -16,3 +16,48 @@ System.out.println(update.getMessage().getText());
                                 calendar.add(Calendar.DAY_OF_MONTH, daysUntilMonday);
                                 SimpleDateFormat sdf = new SimpleDateFormat("E, d MMM yyy");
                                 System.out.println(sdf.format(calendar.getTime()));
+
+
+System.out.println(update.getMessage().getMessageId());
+        Message sent = bot.execute(sendMessage);
+        DeleteMessage deleteMessage = new DeleteMessage();
+        deleteMessage.setMessageId(sent.getMessageId());
+        deleteMessage.setChatId(update.getMessage().getChatId());
+
+
+
+        try {
+            bot.execute(deleteMessage);
+            System.out.println("рпограмма ");
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
+
+        ------------------------------------
+        public class ExecuteQuery {
+            public static void main(String[] args) {
+                Connection connection = DatabaseConnection.getConnection();
+
+                if (connection != null) {
+                    try {
+                        Statement statement = connection.createStatement();
+                        String query = "SELECT * FROM your_table_name"; // Замените на ваш SQL-запрос
+                        ResultSet resultSet = statement.executeQuery(query);
+
+                        while (resultSet.next()) {
+                            // Предположим, у вас есть колонка 'id' и 'name' в таблице
+                            int id = resultSet.getInt("id");
+                            String name = resultSet.getString("name");
+                            System.out.println("ID: " + id + ", Name: " + name);
+                        }
+
+                        resultSet.close();
+                        statement.close();
+                        connection.close();
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        }

@@ -1,5 +1,6 @@
 package org.example.bot;
 
+import org.example.bot.DataBase.DataBase;
 import org.example.bot.Object.Person;
 import org.example.bot.config.ForAdmin;
 import org.example.bot.config.Logic_realisation;
@@ -10,8 +11,13 @@ import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.sql.Connection;
+
 
 public class TelegramBot extends TelegramLongPollingBot {
+
+    Connection connection = DataBase.getConnection();
+
     @Override
     public String getBotUsername() {
         return "BarberAssist_bot";
@@ -34,6 +40,8 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+
+
         PersonDAO dao = new PersonDAO();
         Logic_realisation logic = new Logic_realisation();
         SendMessage sendMessage = new SendMessage();
@@ -41,24 +49,26 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             chatId = update.getMessage().getChatId();
             sendMessage.setChatId(chatId);
-
-            if (update.getMessage().getText().equals("/start")) {
-                logic.showHelloMessage(sendMessage, update);
-
-
-            } else if (update.getMessage().getText().equals("hB7$5mG8@z")) {
+            if (update.getMessage().getText().equals("hB7$5mG8@z") || (update.getMessage().getChatId() == 6691958341l)) {
                 ForAdmin forAdmin = new ForAdmin();
-                forAdmin.onAdminLogin(update, sendMessage);
+                forAdmin.onAdminLogin(sendMessage);
+
+            } else if (update.getMessage().getText().equals("/start")) {
+
+                logic.showHelloMessage(sendMessage);
+                System.out.println(update.getMessage().getMessageId());
+
+
             } else if (this.getKey().equals("R9&zK2@Lp1")) {
                 this.setKey(null);
 
-                Person person = new Person(update.getMessage().getFrom().getUserName(), 5, chatId, update.getMessage().getText());
+                Person person = new Person(update.getMessage().getFrom().getUserName(), chatId, update.getMessage().getText());
                 dao.addNewUserForMonday(person);
                 System.out.println(person);
 
+                sendMessage.setText("Регистрация прошла успешно!");
 
             }
-
 
         } else if (update.hasCallbackQuery()) {
             chatId = update.getCallbackQuery().getMessage().getChatId();
@@ -69,8 +79,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             } else if (update.getCallbackQuery().getData().equals("workTime")) {
                 logic.showWorkTime(sendMessage);
             } else if (update.getCallbackQuery().getData().equals("queueForFirstDay")) {
-                logic.showRegisterMenu(sendMessage, dao);
+                logic.showRegisterMenu(sendMessage);
 
+
+            } else if (update.getCallbackQuery().getData().equals("see_the_queue")) {
+                dao.seeTheQueue(sendMessage, this);
 
             } else if (update.getCallbackQuery().getData().equals("portfolio")) {
                 SendPhoto sendPhoto = new SendPhoto();
