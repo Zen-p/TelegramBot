@@ -3,11 +3,11 @@
 //                    "какие-либо вопросы или потребуется дополнительная " +
 //                    "информация, не стесняйтесь обращаться к нам. Удачного" +
 //                    " дня! \uD83C\uDF1E\n\nВаше место в очереди: 1");
-
+--------------------------------
 System.out.println(update.getMessage().getText());
                 System.out.println(update.getMessage().getFrom().getUserName());
 
-
+--------------------------------
                 Calendar calendar = Calendar.getInstance();
                                 int daysUntilMonday = Calendar.MONDAY - calendar.get(Calendar.DAY_OF_WEEK);
                                 if (daysUntilMonday <= 0) {
@@ -17,14 +17,14 @@ System.out.println(update.getMessage().getText());
                                 SimpleDateFormat sdf = new SimpleDateFormat("E, d MMM yyy");
                                 System.out.println(sdf.format(calendar.getTime()));
 
-
+-------------------------------------
 System.out.println(update.getMessage().getMessageId());
         Message sent = bot.execute(sendMessage);
         DeleteMessage deleteMessage = new DeleteMessage();
         deleteMessage.setMessageId(sent.getMessageId());
         deleteMessage.setChatId(update.getMessage().getChatId());
 
-
+--------------------------
 
         try {
             bot.execute(deleteMessage);
@@ -46,7 +46,7 @@ System.out.println(update.getMessage().getMessageId());
                         ResultSet resultSet = statement.executeQuery(query);
 
                         while (resultSet.next()) {
-                            // Предположим, у вас есть колонка 'id' и 'name' в таблице
+
                             int id = resultSet.getInt("id");
                             String name = resultSet.getString("name");
                             System.out.println("ID: " + id + ", Name: " + name);
@@ -61,3 +61,35 @@ System.out.println(update.getMessage().getMessageId());
                 }
             }
         }
+---------------------------------
+        try {
+                    Statement statement = connection.createStatement();
+                    String SQL = "SELECT * FROM Person";
+                    ResultSet resultSet = statement.executeQuery(SQL);
+
+                    while(resultSet.next()) {
+                        Person person = new Person();
+
+                        person.setId(resultSet.getInt("id"));
+                        person.setName(resultSet.getString("name"));
+                        person.setEmail(resultSet.getString("email"));
+                        person.setAge(resultSet.getInt("age"));
+
+                        people.add(person);
+                    }
+
+                } catch (SQLException throwables) {
+                    throwables.printStackTrace();
+                }
+
+
+                ---------------
+                 try {
+                            Statement statement = connection.createStatement();
+                            String SQL = "INSERT INTO Person VALUES(" + 1 + ",'" + person.getName() +
+                                    "'," + person.getAge() + ",'" + person.getEmail() + "')";
+
+                            statement.executeUpdate(SQL);
+                        } catch (SQLException throwables) {
+                            throwables.printStackTrace();
+                        }

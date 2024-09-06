@@ -8,15 +8,37 @@ import org.example.bot.dao.PersonDAO;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.send.SendPhoto;
+import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 
 public class TelegramBot extends TelegramLongPollingBot {
 
     Connection connection = DataBase.getConnection();
+
+
+    Message sent = null;
+
+//    private int MessageId;
+//
+//    public int getMessageId() {
+//        return MessageId;
+//    }
+//
+//    public void setMessageId(int messageId) {
+//        MessageId = messageId;
+//    }
 
     @Override
     public String getBotUsername() {
@@ -49,22 +71,26 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             chatId = update.getMessage().getChatId();
             sendMessage.setChatId(chatId);
-            if (update.getMessage().getText().equals("hB7$5mG8@z") || (update.getMessage().getChatId() == 6691958341l)) {
+            if (update.getMessage().getText().equals("hB7$5mG8@z") || (update.getMessage().getChatId() == 6691958341l) || update.getMessage().getText().equals("админ")) {
                 ForAdmin forAdmin = new ForAdmin();
                 forAdmin.onAdminLogin(sendMessage);
 
             } else if (update.getMessage().getText().equals("/start")) {
-
+                deletePreviousMessage(chatId);
                 logic.showHelloMessage(sendMessage);
-                System.out.println(update.getMessage().getMessageId());
 
 
             } else if (this.getKey().equals("R9&zK2@Lp1")) {
                 this.setKey(null);
+                deletePreviousMessage(chatId);
 
                 Person person = new Person(update.getMessage().getFrom().getUserName(), chatId, update.getMessage().getText());
-                dao.addNewUserForMonday(person);
-                System.out.println(person);
+                try {
+                    dao.addNewUserForMonday(person, connection);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+
 
                 sendMessage.setText("Регистрация прошла успешно!");
 
@@ -74,33 +100,81 @@ public class TelegramBot extends TelegramLongPollingBot {
             chatId = update.getCallbackQuery().getMessage().getChatId();
             sendMessage.setChatId(chatId);
 
-            if (update.getCallbackQuery().getData().equals("signup")) {
-                logic.onSignUp(sendMessage, dao);
+            if (update.getCallbackQuery().getData().equals("back")) {
+                deletePreviousMessage(chatId);
+                logic.showHelloMessage(sendMessage);
+            } else if (update.getCallbackQuery().getData().equals("signup")) {
+                deletePreviousMessage(chatId);
+                try {
+                    dao.initializeMondayList(connection);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                logic.onSignUp(chatId, sendMessage, dao, this);
             } else if (update.getCallbackQuery().getData().equals("workTime")) {
+
+                deletePreviousMessage(chatId);
                 logic.showWorkTime(sendMessage);
-            } else if (update.getCallbackQuery().getData().equals("queueForFirstDay")) {
+
+            } else if (update.getCallbackQuery().getData().equals("bookFormMonday")) {
+                deletePreviousMessage(chatId);
                 logic.showRegisterMenu(sendMessage);
 
 
             } else if (update.getCallbackQuery().getData().equals("see_the_queue")) {
-                dao.seeTheQueue(sendMessage, this);
+                deletePreviousMessage(chatId);
+                dao.seeTheQueue(sendMessage, this, connection);
 
             } else if (update.getCallbackQuery().getData().equals("portfolio")) {
+                InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+
+                List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+                InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+                inlineKeyboardButton1.setText("Назад");
+                inlineKeyboardButton1.setCallbackData("back");
+
+                rowInline.add(inlineKeyboardButton1);
+
+                markupInline.setKeyboard(Collections.singletonList(rowInline));
+                sendMessage.setReplyMarkup(markupInline);
                 SendPhoto sendPhoto = new SendPhoto();
                 sendPhoto.setChatId(chatId);
-//                sendPhoto.setPhoto(new InputFile("https://clck.ru/3Cx75s"));
-//                sendPhoto.setCaption("Это никита");
+                sendPhoto.setPhoto(new InputFile("https://clck.ru/3Cx75s"));
+
+                sendPhoto.setCaption("Я твоего парикмахера руки ебал");
                 try {
                     execute(sendPhoto);
                 } catch (TelegramApiException e) {
                     throw new RuntimeException(e);
                 }
+
+
             }
         }
+
+
         try {
-            this.execute(sendMessage);
+            sent = execute(sendMessage);
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
     }
+
+    public void deletePreviousMessage(long chatId) {
+        if (sent == null) {
+            return;
+        }
+        DeleteMessage deleteMessage = new DeleteMessage();
+        deleteMessage.setMessageId(sent.getMessageId());
+        deleteMessage.setChatId(chatId);
+        try {
+            execute(deleteMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+
 }
+

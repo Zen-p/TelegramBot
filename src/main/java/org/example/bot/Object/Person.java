@@ -5,12 +5,9 @@ public class Person {
     private long chatId;
     private String telegramUsername;
     private int serialNumber;
-
     private String nameAndSurname;
 
-    public Person(long id, String nameAndSurname) {
-        this.chatId = id;
-        this.nameAndSurname = nameAndSurname;
+    public Person() {
     }
 
     public Person(String telegramUsername, long chatId, String nameAndSurname) {
@@ -28,7 +25,7 @@ public class Person {
         this.chatId = chatId;
     }
 
-    public String gettelegramUsername() {
+    public String getTelegramUsername() {
         return telegramUsername;
     }
 
@@ -54,7 +51,11 @@ public class Person {
 
     @Override
     public String toString() {
-        return ("telegram Username: @" + this.gettelegramUsername() + "\nserialNumber: " + this.getSerialNumber() + "\n" +
+        return ("telegram Username: @" + this.getTelegramUsername() + "\nserialNumber: " + this.getSerialNumber() + "\n" +
                 "chat id: " + chatId + "\nname and surname: " + nameAndSurname + "\n___________________________________");
+    }
+
+    public String toStringForAdmin() {
+        return ("telegram Username: @" + this.getTelegramUsername() + "\nname and surname: " + nameAndSurname + "\n___________________________________");
     }
 }

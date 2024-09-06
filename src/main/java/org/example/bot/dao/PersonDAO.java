@@ -5,11 +5,38 @@ import org.example.bot.TelegramBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
 import java.util.LinkedList;
 import java.util.List;
 
 
 public class PersonDAO {
+
+    public void initializeMondayList (Connection connection) throws SQLException {
+        Statement statement = connection.createStatement();
+        String SQL = "SELECT * FROM bookedForMonday";
+        ResultSet resultSet = statement.executeQuery(SQL);
+        System.out.println("вывод:");
+        while(resultSet.next()) {
+            Person person = new Person();
+
+            person.setChatId(resultSet.getLong("chatId"));
+            person.setTelegramUsername(resultSet.getString("telegramUsername"));
+            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
+
+
+            bookedForMonday.add(person);
+                System.out.println(person.toString());
+
+
+
+        }
+
+
+    }
 
     private long chatId;
 
@@ -37,25 +64,15 @@ public class PersonDAO {
     {
         bookedForMonday = new LinkedList<>();
         bookedForWednesday = new LinkedList<>();
-
-        bookedForMonday.add(new Person(39846349867l, "Peter Fridge"));
-        bookedForMonday.add(new Person(34658734563l, "Matvei Macevich"));
-        bookedForMonday.add(new Person(43653483468l, "Egor Karpovich"));
-        bookedForMonday.add(new Person(37465438755l, "kirill Shirko"));
-
-
-        bookedForWednesday.add(new Person(38456834454l, "Egor Kluch"));
-        bookedForWednesday.add(new Person(34567875647l, "Egor Shishko"));
-        bookedForWednesday.add(new Person(90873458745l, "Narbut Alex"));
-        bookedForWednesday.add(new Person(76276345867l, "kirill Manul"));
-
     }
 
 
-    public void addNewUserForMonday(Person person) {
-        bookedForMonday.add(person);
-        System.out.println("Записался на понедельник");
-        person.setSerialNumber(1 + getSerialIdForMonday());
+    public void addNewUserForMonday(Person person, Connection connection) throws SQLException {
+
+        Statement statement = connection.createStatement();
+        String SQL = "INSERT INTO bookedForMonday VALUES(" + person.getChatId() + ", \"" + person.getTelegramUsername() + "\", \"" + person.getNameAndSurname() + "\")";
+        System.out.println(SQL);
+        statement.executeUpdate(SQL);
 
     }
 
@@ -68,9 +85,24 @@ public class PersonDAO {
         return bookedForWednesday.size();
     }
 
-    public void seeTheQueue(SendMessage sendMessage, TelegramBot bot) {
+    public void seeTheQueue(SendMessage sendMessage, TelegramBot bot, Connection connection) {
+        if (bookedForMonday.isEmpty()) {
+            try {
+                this.initializeMondayList(connection);
+            } catch (SQLException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        sendMessage.setText("Записались на понедельник:");
+        try {
+            bot.execute(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
         for (Person p : bookedForMonday) {
-            sendMessage.setText(p.toString());
+            sendMessage.setText(p.toStringForAdmin());
             try {
                 bot.execute(sendMessage);
             } catch (TelegramApiException e) {
