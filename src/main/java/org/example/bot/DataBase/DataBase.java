@@ -13,7 +13,7 @@ public class DataBase {
         Connection connection = null;
         try {
             connection = DriverManager.getConnection(URL, USER, PASSWORD);
-            System.out.println("Соединение установлено успешно!");
+
         } catch (SQLException e) {
             System.out.println("Ошибка при подключении к базе данных");
             e.printStackTrace();

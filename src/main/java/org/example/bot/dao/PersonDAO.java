@@ -9,29 +9,35 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 
 public class PersonDAO {
 
-    public void initializeMondayList (Connection connection) throws SQLException {
+    public void initializeLists(Connection connection) throws SQLException {
         Statement statement = connection.createStatement();
         String SQL = "SELECT * FROM bookedForMonday";
         ResultSet resultSet = statement.executeQuery(SQL);
-        System.out.println("вывод:");
-        while(resultSet.next()) {
+        while (resultSet.next()) {
             Person person = new Person();
 
             person.setChatId(resultSet.getLong("chatId"));
             person.setTelegramUsername(resultSet.getString("telegramUsername"));
             person.setNameAndSurname(resultSet.getString("nameAndSurname"));
-
-
             bookedForMonday.add(person);
-                System.out.println(person.toString());
 
+        }
 
+        SQL = "SELECT * FROM bookedForWednesday";
+        resultSet = statement.executeQuery(SQL);
+        while (resultSet.next()) {
+            Person person = new Person();
+
+            person.setChatId(resultSet.getLong("chatId"));
+            person.setTelegramUsername(resultSet.getString("telegramUsername"));
+            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
+            bookedForWednesday.add(person);
 
         }
 
@@ -58,12 +64,12 @@ public class PersonDAO {
         this.chatId = chatId;
     }
 
-    List<Person> bookedForMonday;
-    List<Person> bookedForWednesday;
+    Set<Person> bookedForMonday;
+    Set<Person> bookedForWednesday;
 
     {
-        bookedForMonday = new LinkedList<>();
-        bookedForWednesday = new LinkedList<>();
+        bookedForMonday = new HashSet<>();
+        bookedForWednesday = new HashSet<>();
     }
 
 
@@ -73,6 +79,16 @@ public class PersonDAO {
         String SQL = "INSERT INTO bookedForMonday VALUES(" + person.getChatId() + ", \"" + person.getTelegramUsername() + "\", \"" + person.getNameAndSurname() + "\")";
         System.out.println(SQL);
         statement.executeUpdate(SQL);
+
+    }
+
+    public void addNewUserForWednesday(Person person, Connection connection) throws SQLException {
+
+        Statement statement = connection.createStatement();
+        String SQL = "INSERT INTO bookedForWednesday VALUES(" + person.getChatId() + ", \"" + person.getTelegramUsername() + "\", \"" + person.getNameAndSurname() + "\")";
+        System.out.println(SQL);
+        statement.executeUpdate(SQL);
+
 
     }
 
@@ -86,9 +102,9 @@ public class PersonDAO {
     }
 
     public void seeTheQueue(SendMessage sendMessage, TelegramBot bot, Connection connection) {
-        if (bookedForMonday.isEmpty()) {
+        if (bookedForMonday.isEmpty() || bookedForWednesday.isEmpty()) {
             try {
-                this.initializeMondayList(connection);
+                this.initializeLists(connection);
             } catch (SQLException e) {
                 throw new RuntimeException(e);
             }
@@ -108,9 +124,23 @@ public class PersonDAO {
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
-
         }
+
+        sendMessage.setText("Записались на среду:");
+        try {
+            bot.execute(sendMessage);
+        } catch (TelegramApiException e) {
+            throw new RuntimeException(e);
+        }
+
+        for (Person p : bookedForWednesday) {
+            sendMessage.setText(p.toStringForAdmin());
+            try {
+                bot.execute(sendMessage);
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        sendMessage.setText(null);
     }
-
-
 }

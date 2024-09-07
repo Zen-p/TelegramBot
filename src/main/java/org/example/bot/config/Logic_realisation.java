@@ -3,8 +3,10 @@ package org.example.bot.config;
 import org.example.bot.TelegramBot;
 import org.example.bot.dao.PersonDAO;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
+import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -48,6 +50,8 @@ public class Logic_realisation {
 
         markupInline.setKeyboard(rowsInline);
         sendMessage.setReplyMarkup(markupInline);
+
+
 
 
     }
@@ -102,12 +106,12 @@ public class Logic_realisation {
 
             InlineKeyboardButton firstAvvailable = new InlineKeyboardButton();
             firstAvvailable.setText(df.format(calendar.getTime()) + (", доступно мест: " + (5 - dao.getMondaySize())));
-            firstAvvailable.setCallbackData("bookFormMonday");
+            firstAvvailable.setCallbackData("bookForMonday");
 
             calendar.roll(Calendar.DAY_OF_WEEK, +2);
             InlineKeyboardButton secondAvvailable = new InlineKeyboardButton();
             secondAvvailable.setText(df.format(calendar.getTime()) + (", доступно мест: " + (5 - dao.getWednesdaySize())));
-            secondAvvailable.setCallbackData("bookFormWednesday");
+            secondAvvailable.setCallbackData("bookForWednesday");
 
             rowInline1.add(firstAvvailable);
             rowInline2.add(secondAvvailable);
@@ -136,14 +140,11 @@ public class Logic_realisation {
         }
     }
 
-    public void showRegisterMenu(SendMessage sendMessage) {
-
-        sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
-        TelegramBot bot = new TelegramBot();
-        bot.setKey("R9&zK2@Lp1");
 
 
-    }
+
+
+
 
 
 }

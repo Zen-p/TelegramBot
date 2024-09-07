@@ -93,3 +93,7 @@ System.out.println(update.getMessage().getMessageId());
                         } catch (SQLException throwables) {
                             throwables.printStackTrace();
                         }
+
+
+переделать инициализацию
+передаем коллекцию как аргумент
