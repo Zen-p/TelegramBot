@@ -1,12 +1,9 @@
 package org.example.bot.config;
 
-import org.example.bot.TelegramBot;
 import org.example.bot.dao.PersonDAO;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
-import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
@@ -52,8 +49,6 @@ public class Logic_realisation {
         sendMessage.setReplyMarkup(markupInline);
 
 
-
-
     }
 
     public void showWorkTime(SendMessage sendMessage) {
@@ -78,19 +73,31 @@ public class Logic_realisation {
         sendMessage.setReplyMarkup(markupInline);
     }
 
-    public void onSignUp(long chatId, SendMessage sendMessage, PersonDAO dao, TelegramBot bot) {
+    public void onSignUp(SendMessage sendMessage, PersonDAO dao) {
 
 
-
-        if (dao.getMondaySize() < 5 ) {         // || dao.getWednesdaySize() < 5
+        if ((dao.getMondaySize() < 5) || (dao.getWednesdaySize() < 5)) {
 
             Calendar calendar = Calendar.getInstance();
-            int daysUntilMonday = Calendar.MONDAY - calendar.get(Calendar.DAY_OF_WEEK);
-            if (daysUntilMonday <= 0) {
-                daysUntilMonday += 7;
+            int currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+            int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+            int daysUntilWednesday = (Calendar.WEDNESDAY - currentDayOfWeek + 7) % 7;
+            if (daysUntilWednesday == 0 && currentHour >= 23) {
+                daysUntilWednesday = 7;
             }
-            calendar.add(Calendar.DAY_OF_MONTH, daysUntilMonday);
-            SimpleDateFormat sdf = new SimpleDateFormat("E, d MMM yyy");
+            Calendar nextWednesday = (Calendar) calendar.clone();
+            nextWednesday.add(Calendar.DAY_OF_MONTH, daysUntilWednesday);
+
+            int daysUntilMonday = (Calendar.MONDAY - currentDayOfWeek + 7) % 7;
+            if (daysUntilMonday == 0 && currentHour >= 23) {
+                daysUntilMonday = 7;
+            }
+            Calendar nextMonday = (Calendar) calendar.clone();
+            nextMonday.add(Calendar.DAY_OF_MONTH, daysUntilMonday);
+
+
+
+
 
 
             sendMessage.setText("Пожалуйста, выберите подходящую для вас дату");
@@ -105,13 +112,27 @@ public class Logic_realisation {
             List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
 
             InlineKeyboardButton firstAvvailable = new InlineKeyboardButton();
-            firstAvvailable.setText(df.format(calendar.getTime()) + (", доступно мест: " + (5 - dao.getMondaySize())));
-            firstAvvailable.setCallbackData("bookForMonday");
+            if (5 - dao.getMondaySize() > 0) {
+                firstAvvailable.setText(df.format(nextMonday.getTime()) + (", доступно мест: " + (5 - dao.getMondaySize())));
+                firstAvvailable.setCallbackData("bookForMonday");
+            } else {
+                firstAvvailable.setText(df.format(calendar.getTime()) + ", свободных мест нет");
+            }
 
-            calendar.roll(Calendar.DAY_OF_WEEK, +2);
+
+
             InlineKeyboardButton secondAvvailable = new InlineKeyboardButton();
-            secondAvvailable.setText(df.format(calendar.getTime()) + (", доступно мест: " + (5 - dao.getWednesdaySize())));
-            secondAvvailable.setCallbackData("bookForWednesday");
+
+
+
+            if (5 - dao.getWednesdaySize() > 0) {
+                secondAvvailable.setText(df.format(nextWednesday.getTime()) + (", доступно мест: " + (5 - dao.getWednesdaySize())));
+                secondAvvailable.setCallbackData("bookForWednesday");
+            } else {
+                secondAvvailable.setText(df.format(calendar.getTime()) + ", свободных мест нет");
+                secondAvvailable.setCallbackData("no_room");
+            }
+
 
             rowInline1.add(firstAvvailable);
             rowInline2.add(secondAvvailable);
@@ -139,12 +160,6 @@ public class Logic_realisation {
 
         }
     }
-
-
-
-
-
-
 
 
 }

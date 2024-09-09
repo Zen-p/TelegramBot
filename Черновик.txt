@@ -97,3 +97,31 @@ System.out.println(update.getMessage().getMessageId());
 
 переделать инициализацию
 передаем коллекцию как аргумент
+
+
+
+Calendar calendar = Calendar.getInstance();
+                int currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
+                int currentHour = calendar.get(Calendar.HOUR_OF_DAY);
+
+                // Найти ближайшую среду
+                int daysUntilWednesday = (Calendar.WEDNESDAY - currentDayOfWeek + 7) % 7;
+                if (daysUntilWednesday == 0 && currentHour >= 23) {
+                    daysUntilWednesday = 7; // Если сегодня среда и время после 23:00, берем следующую среду
+                }
+
+                Calendar nextWednesday = (Calendar) calendar.clone();
+                nextWednesday.add(Calendar.DAY_OF_MONTH, daysUntilWednesday);
+
+                // Найти ближайший понедельник
+                int daysUntilMonday = (Calendar.MONDAY - currentDayOfWeek + 7) % 7;
+                if (daysUntilMonday == 0 && currentHour >= 23) {
+                    daysUntilMonday = 7; // Если сегодня понедельник и время после 23:00, берем следующий понедельник
+                }
+
+                Calendar nextMonday = (Calendar) calendar.clone();
+                nextMonday.add(Calendar.DAY_OF_MONTH, daysUntilMonday);
+
+                // Вывод ближайших дней
+                System.out.println("Ближайшая среда: " + nextWednesday.getTime());
+                System.out.println("Ближайший понедельник: " + nextMonday.getTime());

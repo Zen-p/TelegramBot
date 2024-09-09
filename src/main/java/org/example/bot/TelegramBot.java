@@ -18,10 +18,7 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -64,6 +61,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
     private void handleMessage(Update update) {
+        ForAdmin forAdmin = new ForAdmin();
         PersonDAO dao = new PersonDAO();
         Logic_realisation logic = new Logic_realisation();
         SendMessage sendMessage = new SendMessage();
@@ -73,9 +71,11 @@ public class TelegramBot extends TelegramLongPollingBot {
             sendMessage.setChatId(chatId);
             if (update.getMessage().getText().equals("hB7$5mG8@z") || update.getMessage().getText().equals("админ")) {
                 deletePreviousMessage(chatId);
-                ForAdmin forAdmin = new ForAdmin();
                 forAdmin.onAdminLogin(sendMessage);
             } else if (update.getMessage().getText().equals("/start")) {
+
+
+
                 logic.showHelloMessage(sendMessage);
                 deletePreviousMessage(chatId);
             } else if (this.getKey().equals("R9&zK2@Lp1")) {
@@ -130,15 +130,23 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-                logic.onSignUp(chatId, sendMessage, dao, this);
+                try {
+                    logic.onSignUp(sendMessage, dao);
+                } catch (Exception e) {
+                    throw e;
+                }
+
             } else if (update.getCallbackQuery().getData().equals("workTime")) {
                 deletePreviousMessage(chatId);
                 logic.showWorkTime(sendMessage);
-            } else if (update.getCallbackQuery().getData().equals("bookFormMonday")) {
+            } else if (update.getCallbackQuery().getData().equals("bookForMonday")) {
                 deletePreviousMessage(chatId);
                 sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
                 setKey("R9&zK2@Lp1");
-            } else if (update.getCallbackQuery().getData().equals("bookForWednesday")) {
+            } else if (update.getCallbackQuery().getData().equals("back_for_admin")) {
+                forAdmin.onAdminLogin(sendMessage);
+            }
+            else if (update.getCallbackQuery().getData().equals("bookForWednesday")) {
                 deletePreviousMessage(chatId);
                 sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
                 TelegramBot bot = new TelegramBot();

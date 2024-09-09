@@ -3,14 +3,15 @@ package org.example.bot.dao;
 import org.example.bot.Object.Person;
 import org.example.bot.TelegramBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 
 public class PersonDAO {
@@ -141,6 +142,24 @@ public class PersonDAO {
                 throw new RuntimeException(e);
             }
         }
-        sendMessage.setText(null);
+
+        sendMessage.setText("Меню");
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+        inlineKeyboardButton1.setText("Назад");
+        inlineKeyboardButton1.setCallbackData("back_for_admin");
+
+        rowInline.add(inlineKeyboardButton1);
+
+        markupInline.setKeyboard(Collections.singletonList(rowInline));
+        sendMessage.setReplyMarkup(markupInline);
+
+
+
+
+
     }
 }
