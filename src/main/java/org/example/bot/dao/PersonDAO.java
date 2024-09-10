@@ -16,17 +16,32 @@ import java.util.*;
 
 public class PersonDAO {
 
+    public Map<?, ?> getBookedForMonday () {
+        return bookedForMonday;
+    }
+
+    public Map<?, ?> bookedForWednesday () {
+        return bookedForMonday;
+    }
+
+    Map<Long, Person> bookedForMonday;
+    Map<Long, Person> bookedForWednesday;
+
     public void initializeLists(Connection connection) throws SQLException {
+        bookedForMonday = new HashMap<>();
+        bookedForWednesday = new HashMap<>();
         Statement statement = connection.createStatement();
         String SQL = "SELECT * FROM bookedForMonday";
+        System.out.println(SQL);
         ResultSet resultSet = statement.executeQuery(SQL);
+
         while (resultSet.next()) {
             Person person = new Person();
 
             person.setChatId(resultSet.getLong("chatId"));
             person.setTelegramUsername(resultSet.getString("telegramUsername"));
             person.setNameAndSurname(resultSet.getString("nameAndSurname"));
-            bookedForMonday.add(person);
+            bookedForMonday.put(person.getChatId(), person);
 
         }
 
@@ -34,14 +49,12 @@ public class PersonDAO {
         resultSet = statement.executeQuery(SQL);
         while (resultSet.next()) {
             Person person = new Person();
-
             person.setChatId(resultSet.getLong("chatId"));
             person.setTelegramUsername(resultSet.getString("telegramUsername"));
             person.setNameAndSurname(resultSet.getString("nameAndSurname"));
-            bookedForWednesday.add(person);
+            bookedForWednesday.put(person.getChatId(), person);
 
         }
-
 
     }
 
@@ -65,30 +78,37 @@ public class PersonDAO {
         this.chatId = chatId;
     }
 
-    Set<Person> bookedForMonday;
-    Set<Person> bookedForWednesday;
 
-    {
-        bookedForMonday = new HashSet<>();
-        bookedForWednesday = new HashSet<>();
-    }
-
-
-    public void addNewUserForMonday(Person person, Connection connection) throws SQLException {
+    public void addNewUserForMonday(Person person, Connection connection, SendMessage sendMessage) throws SQLException {
 
         Statement statement = connection.createStatement();
         String SQL = "INSERT INTO bookedForMonday VALUES(" + person.getChatId() + ", \"" + person.getTelegramUsername() + "\", \"" + person.getNameAndSurname() + "\")";
         System.out.println(SQL);
         statement.executeUpdate(SQL);
+        sendMessage.setText("Регистрация прошла успешно!\nВаше место в очереди: " + (getMondaySize() + 1));
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+
+        inlineKeyboardButton1.setText("Назад");
+        inlineKeyboardButton1.setCallbackData("back");
+
+        rowInline.add(inlineKeyboardButton1);
+
+        markupInline.setKeyboard(Collections.singletonList(rowInline));
+        sendMessage.setReplyMarkup(markupInline);
 
     }
 
-    public void addNewUserForWednesday(Person person, Connection connection) throws SQLException {
+    public void addNewUserForWednesday(Person person, Connection connection, SendMessage sendMessage) throws SQLException {
 
         Statement statement = connection.createStatement();
         String SQL = "INSERT INTO bookedForWednesday VALUES(" + person.getChatId() + ", \"" + person.getTelegramUsername() + "\", \"" + person.getNameAndSurname() + "\")";
         System.out.println(SQL);
         statement.executeUpdate(SQL);
+        sendMessage.setText("Регистрация прошла успешно!\nВаше место в очереди: " + (getWednesdaySize() + 1));
 
 
     }
@@ -103,47 +123,45 @@ public class PersonDAO {
     }
 
     public void seeTheQueue(SendMessage sendMessage, TelegramBot bot, Connection connection) {
-        if (bookedForMonday.isEmpty() || bookedForWednesday.isEmpty()) {
-            try {
-                this.initializeLists(connection);
-            } catch (SQLException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        sendMessage.setText("Записались на понедельник:");
-        try {
-            bot.execute(sendMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
-
-        for (Person p : bookedForMonday) {
-            sendMessage.setText(p.toStringForAdmin());
+        if (!bookedForMonday.isEmpty()) {
+            sendMessage.setText("Записались на понедельник:");
             try {
                 bot.execute(sendMessage);
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
-        }
 
-        sendMessage.setText("Записались на среду:");
-        try {
-            bot.execute(sendMessage);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
-        }
-
-        for (Person p : bookedForWednesday) {
-            sendMessage.setText(p.toStringForAdmin());
+            for (Person p : bookedForMonday.values()) {
+                sendMessage.setText(p.toStringForAdmin());
+                try {
+                    bot.execute(sendMessage);
+                } catch (TelegramApiException e) {
+                    throw new RuntimeException(e);
+                }
+            }
+        } else if (!bookedForWednesday.isEmpty()) {
+            sendMessage.setText("Записались на среду:");
             try {
                 bot.execute(sendMessage);
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
+
+            for (Person p : bookedForWednesday.values()) {
+                sendMessage.setText(p.toStringForAdmin());
+                try {
+                    bot.execute(sendMessage);
+                } catch (TelegramApiException e) {
+                    throw new RuntimeException(e);
+                }
+            }
         }
 
-        sendMessage.setText("Меню");
+
+
+
+
+        sendMessage.setText("Меню: ");
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
 
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
@@ -156,9 +174,6 @@ public class PersonDAO {
 
         markupInline.setKeyboard(Collections.singletonList(rowInline));
         sendMessage.setReplyMarkup(markupInline);
-
-
-
 
 
     }

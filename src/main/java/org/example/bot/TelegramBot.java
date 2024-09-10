@@ -38,6 +38,8 @@ public class TelegramBot extends TelegramLongPollingBot {
         return "7214428459:AAF_rPscG7Q6x3eZa8j5Hj4g-a7KKq4fLSM";
     }
 
+
+
     static String key;
 
     private String getKey() {
@@ -47,7 +49,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void setKey(String key) {
         this.key = key;
     }
-
+    PersonDAO dao = new PersonDAO();
     long chatId;
 
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // 10 потоков
@@ -62,7 +64,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     private void handleMessage(Update update) {
         ForAdmin forAdmin = new ForAdmin();
-        PersonDAO dao = new PersonDAO();
+
         Logic_realisation logic = new Logic_realisation();
         SendMessage sendMessage = new SendMessage();
 
@@ -73,35 +75,34 @@ public class TelegramBot extends TelegramLongPollingBot {
                 deletePreviousMessage(chatId);
                 forAdmin.onAdminLogin(sendMessage);
             } else if (update.getMessage().getText().equals("/start")) {
-
-
-
+                System.out.println(update.getMessage().getChatId());
                 logic.showHelloMessage(sendMessage);
                 deletePreviousMessage(chatId);
+
             } else if (this.getKey().equals("R9&zK2@Lp1")) {
                 this.setKey(null);
                 deletePreviousMessage(chatId);
 
                 Person person = new Person(update.getMessage().getFrom().getUserName(), chatId, update.getMessage().getText());
                 try {
-                    dao.addNewUserForMonday(person, connection);
+                    dao.addNewUserForMonday(person, connection, sendMessage);
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
 
-                sendMessage.setText("Регистрация прошла успешно!");
+
             } else if (this.getKey().equals("R9&zK2_2@#p1")) {
                 this.setKey(null);
                 deletePreviousMessage(chatId);
 
                 Person person = new Person(update.getMessage().getFrom().getUserName(), chatId, update.getMessage().getText());
                 try {
-                    dao.addNewUserForWednesday(person, connection);
+                    dao.addNewUserForWednesday(person, connection, sendMessage);
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
 
-                sendMessage.setText("Регистрация прошла успешно!");
+
 
                 InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
 
@@ -131,7 +132,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                     throw new RuntimeException(e);
                 }
                 try {
-                    logic.onSignUp(sendMessage, dao);
+                    logic.onSignUp(sendMessage, dao, chatId);
                 } catch (Exception e) {
                     throw e;
                 }
@@ -149,11 +150,22 @@ public class TelegramBot extends TelegramLongPollingBot {
             else if (update.getCallbackQuery().getData().equals("bookForWednesday")) {
                 deletePreviousMessage(chatId);
                 sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
-                TelegramBot bot = new TelegramBot();
+
                 setKey("R9&zK2_2@#p1");
             } else if (update.getCallbackQuery().getData().equals("see_the_queue")) {
                 deletePreviousMessage(chatId);
-                dao.seeTheQueue(sendMessage, this, connection);
+                try {
+                    dao.initializeLists(connection);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+
+                try {
+                    dao.seeTheQueue(sendMessage, this, connection);
+                } catch (Exception e ) {
+                    throw e;
+                }
+
             } else if (update.getCallbackQuery().getData().equals("portfolio")) {
                 deletePreviousMessage(chatId);
 
@@ -161,7 +173,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendPhoto.setChatId(chatId);
                 sendPhoto.setPhoto(new InputFile("https://clck.ru/3Cx75s"));
 
-                sendPhoto.setCaption("Я твоего парикмахера руки ебал");
+                sendPhoto.setCaption("У нас стригутся самые знаменитые личности");
 
                 InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
 

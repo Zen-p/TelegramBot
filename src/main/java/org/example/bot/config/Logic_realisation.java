@@ -73,10 +73,55 @@ public class Logic_realisation {
         sendMessage.setReplyMarkup(markupInline);
     }
 
-    public void onSignUp(SendMessage sendMessage, PersonDAO dao) {
+    public void onSignUp(SendMessage sendMessage, PersonDAO dao, long chatId) {
+
+        if (dao.getBookedForMonday().containsKey(chatId)) {
+            sendMessage.setText("Вы уже записаны на понедельник!");
+
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+
+            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+            InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+
+            inlineKeyboardButton1.setText("Назад");
+            inlineKeyboardButton1.setCallbackData("back");
+            InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
+            inlineKeyboardButton2.setText("Покинуть очередь");
+            inlineKeyboardButton2.setCallbackData("passMonday");
+
+            rowInline.add(inlineKeyboardButton1);
+            rowInline.add(inlineKeyboardButton2);
+
+            markupInline.setKeyboard(Collections.singletonList(rowInline));
+            sendMessage.setReplyMarkup(markupInline);
+        }
+        else if (dao.getBookedForMonday().containsKey(chatId)) {
+            sendMessage.setText("Вы уже записаны на среду!");
+
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+
+            List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+            InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+
+            inlineKeyboardButton1.setText("Назад");
+            inlineKeyboardButton1.setCallbackData("back");
+            InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
+            inlineKeyboardButton2.setText("Покинуть очередь");
+            inlineKeyboardButton2.setCallbackData("passWednesday");
+
+            rowInline.add(inlineKeyboardButton1);
+            rowInline.add(inlineKeyboardButton2);
+
+            markupInline.setKeyboard(Collections.singletonList(rowInline));
+            sendMessage.setReplyMarkup(markupInline);
+        }
 
 
-        if ((dao.getMondaySize() < 5) || (dao.getWednesdaySize() < 5)) {
+
+
+        else if ((dao.getMondaySize() < 5) || (dao.getWednesdaySize() < 5)) {
 
             Calendar calendar = Calendar.getInstance();
             int currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
@@ -95,11 +140,6 @@ public class Logic_realisation {
             Calendar nextMonday = (Calendar) calendar.clone();
             nextMonday.add(Calendar.DAY_OF_MONTH, daysUntilMonday);
 
-
-
-
-
-
             sendMessage.setText("Пожалуйста, выберите подходящую для вас дату");
 
 
@@ -115,14 +155,13 @@ public class Logic_realisation {
             if (5 - dao.getMondaySize() > 0) {
                 firstAvvailable.setText(df.format(nextMonday.getTime()) + (", доступно мест: " + (5 - dao.getMondaySize())));
                 firstAvvailable.setCallbackData("bookForMonday");
+
             } else {
                 firstAvvailable.setText(df.format(calendar.getTime()) + ", свободных мест нет");
+                firstAvvailable.setCallbackData("no_room");
             }
 
-
-
             InlineKeyboardButton secondAvvailable = new InlineKeyboardButton();
-
 
 
             if (5 - dao.getWednesdaySize() > 0) {
