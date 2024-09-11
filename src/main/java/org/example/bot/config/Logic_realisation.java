@@ -16,16 +16,28 @@ import java.util.List;
 public class Logic_realisation {
 
 
-    byte valueIndicator = 5;
+    byte mondayValueIndicator = 5;
 
 
-    public byte getValueIndicator() {
-        return valueIndicator;
+    public byte getMondayValueIndicator() {
+        return mondayValueIndicator;
     }
 
-    public void setValueIndicator(byte valueIndicator) {
-        this.valueIndicator = valueIndicator;
+    public void setMondayValueIndicator(byte mondayValueIndicator) {
+        this.mondayValueIndicator = mondayValueIndicator;
     }
+
+    byte wednesdayValueIndicator = 5;
+
+
+    public byte getWednesdayValueIndicator() {
+        return wednesdayValueIndicator;
+    }
+
+    public void setWednesdayValueIndicator(byte wednesdayValueIndicator) {
+        this.wednesdayValueIndicator = wednesdayValueIndicator;
+    }
+
 
     public void showHelloMessage(SendMessage sendMessage) {
         sendMessage.setText("Добро пожаловать в нашу парикмахерскую!\n" +
@@ -133,7 +145,7 @@ public class Logic_realisation {
 
 
 
-        else if ((dao.getMondaySize() < 5) || (dao.getWednesdaySize() < 5)) {
+        else if ((dao.getMondaySize() < getMondayValueIndicator()) || (dao.getWednesdaySize() < getMondayValueIndicator())) {
 
             Calendar calendar = Calendar.getInstance();
             int currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
@@ -141,6 +153,7 @@ public class Logic_realisation {
             int daysUntilWednesday = (Calendar.WEDNESDAY - currentDayOfWeek + 7) % 7;
             if (daysUntilWednesday == 0 && currentHour >= 23) {
                 daysUntilWednesday = 7;
+                setWednesdayValueIndicator((byte) 5);
             }
             Calendar nextWednesday = (Calendar) calendar.clone();
             nextWednesday.add(Calendar.DAY_OF_MONTH, daysUntilWednesday);
@@ -148,6 +161,7 @@ public class Logic_realisation {
             int daysUntilMonday = (Calendar.MONDAY - currentDayOfWeek + 7) % 7;
             if (daysUntilMonday == 0 && currentHour >= 23) {
                 daysUntilMonday = 7;
+                setMondayValueIndicator((byte) 5);
             }
             Calendar nextMonday = (Calendar) calendar.clone();
             nextMonday.add(Calendar.DAY_OF_MONTH, daysUntilMonday);
@@ -164,8 +178,8 @@ public class Logic_realisation {
             List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
 
             InlineKeyboardButton firstAvvailable = new InlineKeyboardButton();
-            if (getValueIndicator() - dao.getMondaySize() > 0) {
-                firstAvvailable.setText(df.format(nextMonday.getTime()) + (", доступно мест: " + (getValueIndicator() - dao.getMondaySize())));
+            if (getMondayValueIndicator() - dao.getMondaySize() > 0) {
+                firstAvvailable.setText(df.format(nextMonday.getTime()) + (", доступно мест: " + (getMondayValueIndicator() - dao.getMondaySize())));
                 firstAvvailable.setCallbackData("bookForMonday");
 
             } else {
@@ -176,8 +190,8 @@ public class Logic_realisation {
             InlineKeyboardButton secondAvvailable = new InlineKeyboardButton();
 
 
-            if (getValueIndicator() - dao.getWednesdaySize() > 0) {
-                secondAvvailable.setText(df.format(nextWednesday.getTime()) + (", доступно мест: " + (getValueIndicator() - dao.getWednesdaySize())));
+            if (getWednesdayValueIndicator() - dao.getWednesdaySize() > 0) {
+                secondAvvailable.setText(df.format(nextWednesday.getTime()) + (", доступно мест: " + (getWednesdayValueIndicator() - dao.getWednesdaySize())));
                 secondAvvailable.setCallbackData("bookForWednesday");
             } else {
                 secondAvvailable.setText(df.format(calendar.getTime()) + ", свободных мест нет");

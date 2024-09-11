@@ -46,7 +46,7 @@ public class PersonDAO {
         String SQL = "INSERT INTO peopleInQueue VALUES(" + person.getChatId() + ", \"" + person.getTelegramUsername() + "\", \"" + person.getNameAndSurname() + "\")";
         System.out.println(SQL);
         statement.executeUpdate(SQL);
-        sendMessage.setText("Регистрация прошла успешно!\nВаше место в очереди: " + (getMondaySize() + 1));
+        sendMessage.setText("Вы стали в очередь!\n При появлении свободных мест вы будете уведомлены");
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<InlineKeyboardButton> rowInline = new ArrayList<>();
         InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
@@ -118,6 +118,8 @@ public class PersonDAO {
     private long chatId;
 
     private int serialIdForMonday;
+
+
 
 
 

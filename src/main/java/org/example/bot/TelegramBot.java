@@ -26,9 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TelegramBot extends TelegramLongPollingBot {
-
     Connection connection = DataBase.getConnection();
-
     private final HashMap<Long, Message> sentMessages = new HashMap<>();
 
     @Override
@@ -40,7 +38,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     public String getBotToken() {
         return "7214428459:AAF_rPscG7Q6x3eZa8j5Hj4g-a7KKq4fLSM";
     }
-
 
     static String key;
 
@@ -54,7 +51,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     PersonDAO dao = new PersonDAO();
     long chatId;
-
+    Logic_realisation logic = new Logic_realisation();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // 10 потоков
 
     @Override
@@ -68,7 +65,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     private void handleMessage(Update update) {
         ForAdmin forAdmin = new ForAdmin();
 
-        Logic_realisation logic = new Logic_realisation();
+
         SendMessage sendMessage = new SendMessage();
 
         if (update.hasMessage()) {
@@ -82,7 +79,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 logic.showHelloMessage(sendMessage);
                 deletePreviousMessage(chatId);
 
-            } else if (this.getKey().equals("R9&zK2@Lp1")) {
+            } else if (this.getKey().equals("bookForMonday")) {
                 this.setKey(null);
                 deletePreviousMessage(chatId);
 
@@ -94,7 +91,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
 
 
-            } else if (this.getKey().equals("R9&zK2_2@#p1")) {
+            } else if (this.getKey().equals("bookForWednesday")) {
                 this.setKey(null);
                 deletePreviousMessage(chatId);
 
@@ -117,7 +114,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
                 markupInline.setKeyboard(Collections.singletonList(rowInline));
                 sendMessage.setReplyMarkup(markupInline);
-            } else if (this.getKey().equals("khfhhfhksghtbv")) {
+            } else if (this.getKey().equals("put_person_in_queue")) {
                 this.setKey(null);
                 deletePreviousMessage(chatId);
 
@@ -170,7 +167,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             else if (update.getCallbackQuery().getData().equals("passMonday")) {
                 deletePreviousMessage(chatId);
                 try {
-                    dao.passQueue(sendMessage,connection, chatId, "bookedForMonday");
+                    dao.passQueue(sendMessage, connection, chatId, "bookedForMonday");
                 } catch (SQLException e) {
                     System.out.println(e);
                 }
@@ -178,7 +175,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             else if (update.getCallbackQuery().getData().equals("passWednesday")) {
                 deletePreviousMessage(chatId);
                 try {
-                    dao.passQueue(sendMessage,connection, chatId, "bookedForWednesday");
+                    dao.passQueue(sendMessage, connection, chatId, "bookedForWednesday");
                 } catch (SQLException e) {
                     System.out.println(e);
                 }
@@ -186,7 +183,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             else if (update.getCallbackQuery().getData().equals("bookForMonday")) {
                 deletePreviousMessage(chatId);
                 sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
-                setKey("R9&zK2@Lp1");
+                setKey("bookForMonday");
             }
             else if (update.getCallbackQuery().getData().equals("back_for_admin")) {
                 forAdmin.onAdminLogin(sendMessage);
@@ -195,7 +192,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 deletePreviousMessage(chatId);
                 sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
 
-                setKey("R9&zK2_2@#p1");
+                setKey("bookForWednesday");
             }
             else if (update.getCallbackQuery().getData().equals("see_the_queue")) {
                 deletePreviousMessage(chatId);
@@ -218,10 +215,14 @@ public class TelegramBot extends TelegramLongPollingBot {
                 forAdmin.addToQueue(logic);
 
             }
+            else if (update.getCallbackQuery().getData().equals("CheckQueue")) {
+                deletePreviousMessage(chatId);
+                forAdmin.CheckQueue(sendMessage);
+
+            }
             else if (update.getCallbackQuery().getData().equals("put_person_in_queue")) {
                 deletePreviousMessage(chatId);
-                sendMessage.setText("Укажите имя и фамилию для записи в очередь");
-                setKey("khfhhfhksghtbv");
+                setKey("put_person_in_queue");
 
             }
             else if (update.getCallbackQuery().getData().equals("portfolio")) {
