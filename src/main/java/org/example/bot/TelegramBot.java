@@ -18,7 +18,10 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -39,7 +42,6 @@ public class TelegramBot extends TelegramLongPollingBot {
     }
 
 
-
     static String key;
 
     private String getKey() {
@@ -49,6 +51,7 @@ public class TelegramBot extends TelegramLongPollingBot {
     public void setKey(String key) {
         this.key = key;
     }
+
     PersonDAO dao = new PersonDAO();
     long chatId;
 
@@ -102,7 +105,28 @@ public class TelegramBot extends TelegramLongPollingBot {
                     throw new RuntimeException(e);
                 }
 
+                InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
 
+                List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+                InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+                inlineKeyboardButton1.setText("Назад");
+                inlineKeyboardButton1.setCallbackData("back");
+
+                rowInline.add(inlineKeyboardButton1);
+
+                markupInline.setKeyboard(Collections.singletonList(rowInline));
+                sendMessage.setReplyMarkup(markupInline);
+            } else if (this.getKey().equals("khfhhfhksghtbv")) {
+                this.setKey(null);
+                deletePreviousMessage(chatId);
+
+                Person person = new Person(update.getMessage().getFrom().getUserName(), chatId, update.getMessage().getText());
+                try {
+                    dao.addToAQueue(connection, sendMessage, person);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
 
                 InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
 
@@ -124,7 +148,8 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (update.getCallbackQuery().getData().equals("back")) {
                 deletePreviousMessage(chatId);
                 logic.showHelloMessage(sendMessage);
-            } else if (update.getCallbackQuery().getData().equals("signup")) {
+            }
+            else if (update.getCallbackQuery().getData().equals("signup")) {
                 deletePreviousMessage(chatId);
                 try {
                     dao.initializeLists(connection);
@@ -137,14 +162,33 @@ public class TelegramBot extends TelegramLongPollingBot {
                     throw e;
                 }
 
-            } else if (update.getCallbackQuery().getData().equals("workTime")) {
+            }
+            else if (update.getCallbackQuery().getData().equals("workTime")) {
                 deletePreviousMessage(chatId);
                 logic.showWorkTime(sendMessage);
-            } else if (update.getCallbackQuery().getData().equals("bookForMonday")) {
+            }
+            else if (update.getCallbackQuery().getData().equals("passMonday")) {
+                deletePreviousMessage(chatId);
+                try {
+                    dao.passQueue(sendMessage,connection, chatId, "bookedForMonday");
+                } catch (SQLException e) {
+                    System.out.println(e);
+                }
+            }
+            else if (update.getCallbackQuery().getData().equals("passWednesday")) {
+                deletePreviousMessage(chatId);
+                try {
+                    dao.passQueue(sendMessage,connection, chatId, "bookedForWednesday");
+                } catch (SQLException e) {
+                    System.out.println(e);
+                }
+            }
+            else if (update.getCallbackQuery().getData().equals("bookForMonday")) {
                 deletePreviousMessage(chatId);
                 sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
                 setKey("R9&zK2@Lp1");
-            } else if (update.getCallbackQuery().getData().equals("back_for_admin")) {
+            }
+            else if (update.getCallbackQuery().getData().equals("back_for_admin")) {
                 forAdmin.onAdminLogin(sendMessage);
             }
             else if (update.getCallbackQuery().getData().equals("bookForWednesday")) {
@@ -152,7 +196,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
 
                 setKey("R9&zK2_2@#p1");
-            } else if (update.getCallbackQuery().getData().equals("see_the_queue")) {
+            }
+            else if (update.getCallbackQuery().getData().equals("see_the_queue")) {
                 deletePreviousMessage(chatId);
                 try {
                     dao.initializeLists(connection);
@@ -161,12 +206,25 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
 
                 try {
-                    dao.seeTheQueue(sendMessage, this, connection);
-                } catch (Exception e ) {
+                    dao.seeTheQueue(sendMessage, this);
+                } catch (Exception e) {
                     throw e;
                 }
 
-            } else if (update.getCallbackQuery().getData().equals("portfolio")) {
+
+            }
+            else if (update.getCallbackQuery().getData().equals("addToQueue")) {
+                deletePreviousMessage(chatId);
+                forAdmin.addToQueue(logic);
+
+            }
+            else if (update.getCallbackQuery().getData().equals("put_person_in_queue")) {
+                deletePreviousMessage(chatId);
+                sendMessage.setText("Укажите имя и фамилию для записи в очередь");
+                setKey("khfhhfhksghtbv");
+
+            }
+            else if (update.getCallbackQuery().getData().equals("portfolio")) {
                 deletePreviousMessage(chatId);
 
                 SendPhoto sendPhoto = new SendPhoto();

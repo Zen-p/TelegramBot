@@ -15,6 +15,18 @@ import java.util.List;
 
 public class Logic_realisation {
 
+
+    byte valueIndicator = 5;
+
+
+    public byte getValueIndicator() {
+        return valueIndicator;
+    }
+
+    public void setValueIndicator(byte valueIndicator) {
+        this.valueIndicator = valueIndicator;
+    }
+
     public void showHelloMessage(SendMessage sendMessage) {
         sendMessage.setText("Добро пожаловать в нашу парикмахерскую!\n" +
                 "Мы рады видеть вас и готовы помочь вам записаться на услуги парикмахера");
@@ -96,7 +108,7 @@ public class Logic_realisation {
             markupInline.setKeyboard(Collections.singletonList(rowInline));
             sendMessage.setReplyMarkup(markupInline);
         }
-        else if (dao.getBookedForMonday().containsKey(chatId)) {
+        else if (dao.getBookedForWednesday().containsKey(chatId)) {
             sendMessage.setText("Вы уже записаны на среду!");
 
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
@@ -152,8 +164,8 @@ public class Logic_realisation {
             List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
 
             InlineKeyboardButton firstAvvailable = new InlineKeyboardButton();
-            if (5 - dao.getMondaySize() > 0) {
-                firstAvvailable.setText(df.format(nextMonday.getTime()) + (", доступно мест: " + (5 - dao.getMondaySize())));
+            if (getValueIndicator() - dao.getMondaySize() > 0) {
+                firstAvvailable.setText(df.format(nextMonday.getTime()) + (", доступно мест: " + (getValueIndicator() - dao.getMondaySize())));
                 firstAvvailable.setCallbackData("bookForMonday");
 
             } else {
@@ -164,8 +176,8 @@ public class Logic_realisation {
             InlineKeyboardButton secondAvvailable = new InlineKeyboardButton();
 
 
-            if (5 - dao.getWednesdaySize() > 0) {
-                secondAvvailable.setText(df.format(nextWednesday.getTime()) + (", доступно мест: " + (5 - dao.getWednesdaySize())));
+            if (getValueIndicator() - dao.getWednesdaySize() > 0) {
+                secondAvvailable.setText(df.format(nextWednesday.getTime()) + (", доступно мест: " + (getValueIndicator() - dao.getWednesdaySize())));
                 secondAvvailable.setCallbackData("bookForWednesday");
             } else {
                 secondAvvailable.setText(df.format(calendar.getTime()) + ", свободных мест нет");

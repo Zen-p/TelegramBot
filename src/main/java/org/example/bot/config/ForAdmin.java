@@ -22,12 +22,27 @@ public class ForAdmin {
         inlineKeyboardButton1.setText("Посмотреть очередь");
         inlineKeyboardButton1.setCallbackData("see_the_queue");
 
+        InlineKeyboardButton inlineKeyboardButton2 = new InlineKeyboardButton();
+        inlineKeyboardButton2.setText("Добавить в очередь");
+        inlineKeyboardButton2.setCallbackData("addToQueue");
+
         rowInline_1.add(inlineKeyboardButton1);
+        rowInline_1.add(inlineKeyboardButton2);
 
         rowsInline.add(rowInline_1);
 
         markupInline.setKeyboard(rowsInline);
         sendMessage.setReplyMarkup(markupInline);
+
+    }
+
+
+
+    public void addToQueue (Logic_realisation logic) {
+        logic.setValueIndicator((byte) 6);
+
+
+
 
     }
 }

@@ -1,5 +1,6 @@
 package org.example.bot.dao;
 
+import com.fasterxml.jackson.core.JsonEncoding;
 import org.example.bot.Object.Person;
 import org.example.bot.TelegramBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -16,20 +17,77 @@ import java.util.*;
 
 public class PersonDAO {
 
+
+
     public Map<?, ?> getBookedForMonday () {
         return bookedForMonday;
     }
 
-    public Map<?, ?> bookedForWednesday () {
+    public Map<?, ?> getBookedForWednesday () {
+        return bookedForWednesday;
+    }
+
+    public Map<?, ?> setBookedForWednesday () {
         return bookedForMonday;
     }
 
     Map<Long, Person> bookedForMonday;
     Map<Long, Person> bookedForWednesday;
 
+
+    public void addToAQueue(Connection connection, SendMessage sendMessage, Person person) throws SQLException {
+
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        String SQL = "INSERT INTO peopleInQueue VALUES(" + person.getChatId() + ", \"" + person.getTelegramUsername() + "\", \"" + person.getNameAndSurname() + "\")";
+        System.out.println(SQL);
+        statement.executeUpdate(SQL);
+        sendMessage.setText("Регистрация прошла успешно!\nВаше место в очереди: " + (getMondaySize() + 1));
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+        inlineKeyboardButton1.setText("Назад");
+        inlineKeyboardButton1.setCallbackData("back");
+        rowInline.add(inlineKeyboardButton1);
+        markupInline.setKeyboard(Collections.singletonList(rowInline));
+        sendMessage.setReplyMarkup(markupInline);
+
+
+    }
+
+    public void passQueue (SendMessage sendMessage, Connection connection, long chatId, String table) throws SQLException {
+        Statement statement = connection.createStatement();
+        String SQL = "Delete from " + table + " \nwhere chatId = " + chatId;
+        System.out.println(SQL);
+        int resultSet = statement.executeUpdate(SQL);
+        System.out.println("прошло");
+        sendMessage.setText("Вы покинули очередь!");
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+
+        inlineKeyboardButton1.setText("Назад");
+        inlineKeyboardButton1.setCallbackData("back");
+
+        rowInline.add(inlineKeyboardButton1);
+
+        markupInline.setKeyboard(Collections.singletonList(rowInline));
+        sendMessage.setReplyMarkup(markupInline);
+
+
+
+    }
+
     public void initializeLists(Connection connection) throws SQLException {
         bookedForMonday = new HashMap<>();
         bookedForWednesday = new HashMap<>();
+
         Statement statement = connection.createStatement();
         String SQL = "SELECT * FROM bookedForMonday";
         System.out.println(SQL);
@@ -42,7 +100,6 @@ public class PersonDAO {
             person.setTelegramUsername(resultSet.getString("telegramUsername"));
             person.setNameAndSurname(resultSet.getString("nameAndSurname"));
             bookedForMonday.put(person.getChatId(), person);
-
         }
 
         SQL = "SELECT * FROM bookedForWednesday";
@@ -62,21 +119,6 @@ public class PersonDAO {
 
     private int serialIdForMonday;
 
-    public int getSerialIdForMonday() {
-        return serialIdForMonday;
-    }
-
-    public void setSerialIdForMonday(int serialIdForMonday) {
-        this.serialIdForMonday = serialIdForMonday;
-    }
-
-    public long getChatId() {
-        return chatId;
-    }
-
-    public void setChatId(long chatId) {
-        this.chatId = chatId;
-    }
 
 
     public void addNewUserForMonday(Person person, Connection connection, SendMessage sendMessage) throws SQLException {
@@ -122,7 +164,7 @@ public class PersonDAO {
         return bookedForWednesday.size();
     }
 
-    public void seeTheQueue(SendMessage sendMessage, TelegramBot bot, Connection connection) {
+    public void seeTheQueue(SendMessage sendMessage, TelegramBot bot) {
         if (!bookedForMonday.isEmpty()) {
             sendMessage.setText("Записались на понедельник:");
             try {
