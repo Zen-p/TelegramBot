@@ -53,21 +53,36 @@ public class ForAdmin {
         inlineKeyboardButton2.setText("Добавить в очередь");
         inlineKeyboardButton2.setCallbackData("addToQueue");
 
+        List<InlineKeyboardButton> rowInline_2 = new ArrayList<>();
+        InlineKeyboardButton inlineKeyboardButton3 = new InlineKeyboardButton();
+        inlineKeyboardButton3.setText("назад");
+        inlineKeyboardButton3.setCallbackData("back_for_admin");
+
         rowInline_1.add(inlineKeyboardButton1);
         rowInline_1.add(inlineKeyboardButton2);
+        rowInline_2.add(inlineKeyboardButton3);
+
 
         rowsInline.add(rowInline_1);
+        rowsInline.add(rowInline_2);
 
         markupInline.setKeyboard(rowsInline);
         sendMessage.setReplyMarkup(markupInline);
+
     }
 
-    public void addToQueue (Logic_realisation logic) {
+    public void addToQueue (Logic_realisation logic, SendMessage sendMessage) {
         Calendar calendar = Calendar.getInstance();
         if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY){
             logic.setMondayValueIndicator((byte) 6);
-        } else {
+            sendMessage.setText("Добавлено место на понедельник");
+
+        } else if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.WEDNESDAY){
             logic.setWednesdayValueIndicator((byte) 6);
+            sendMessage.setText("Добавлено место на среду");
+        }
+        else {
+            sendMessage.setText("Добавление дополнительных мест доступно только в рабочий день!");
         }
 
 

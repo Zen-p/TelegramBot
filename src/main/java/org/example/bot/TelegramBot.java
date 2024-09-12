@@ -212,7 +212,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             }
             else if (update.getCallbackQuery().getData().equals("addToQueue")) {
                 deletePreviousMessage(chatId);
-                forAdmin.addToQueue(logic);
+                forAdmin.addToQueue(logic, sendMessage);
 
             }
             else if (update.getCallbackQuery().getData().equals("CheckQueue")) {
