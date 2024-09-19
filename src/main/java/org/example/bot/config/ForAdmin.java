@@ -8,6 +8,7 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKe
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collections;
 import java.util.List;
 
 public class ForAdmin {
@@ -73,18 +74,68 @@ public class ForAdmin {
 
     public void addToQueue (Logic_realisation logic, SendMessage sendMessage) {
         Calendar calendar = Calendar.getInstance();
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<InlineKeyboardButton> rowInline_1 = new ArrayList<>();
+
+        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+        inlineKeyboardButton1.setText("назад");
+        inlineKeyboardButton1.setCallbackData("back_for_admin");
+
+        rowInline_1.add(inlineKeyboardButton1);
+
+        markupInline.setKeyboard(Collections.singletonList(rowInline_1));
+        sendMessage.setReplyMarkup(markupInline);
+
         if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY){
             logic.setMondayValueIndicator((byte) 6);
             sendMessage.setText("Добавлено место на понедельник");
 
+
+
+
         } else if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.WEDNESDAY){
             logic.setWednesdayValueIndicator((byte) 6);
             sendMessage.setText("Добавлено место на среду");
+
         }
         else {
             sendMessage.setText("Добавление дополнительных мест доступно только в рабочий день!");
-        }
 
+        }
+    }
+
+    public void showWorkMenu (SendMessage sendMessage) {
+        sendMessage.setText("Рабочее пространство: ");
+
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<List<InlineKeyboardButton>> rowsInline = new ArrayList<>();
+
+        List<InlineKeyboardButton> rowInline_1 = new ArrayList<>();
+
+        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+        inlineKeyboardButton1.setText("Следующий по очереди");
+        inlineKeyboardButton1.setCallbackData("next");
+
+
+        List<InlineKeyboardButton> rowInline_2 = new ArrayList<>();
+        InlineKeyboardButton inlineKeyboardButton3 = new InlineKeyboardButton();
+        inlineKeyboardButton3.setText("назад");
+        inlineKeyboardButton3.setCallbackData("back_for_admin");
+
+        rowInline_1.add(inlineKeyboardButton1);
+
+        rowInline_2.add(inlineKeyboardButton3);
+
+
+        rowsInline.add(rowInline_1);
+        rowsInline.add(rowInline_2);
+
+        markupInline.setKeyboard(rowsInline);
+        sendMessage.setReplyMarkup(markupInline);
 
     }
+
+
+
+
 }

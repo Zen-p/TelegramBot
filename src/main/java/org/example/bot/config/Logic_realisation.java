@@ -119,8 +119,7 @@ public class Logic_realisation {
 
             markupInline.setKeyboard(Collections.singletonList(rowInline));
             sendMessage.setReplyMarkup(markupInline);
-        }
-        else if (dao.getBookedForWednesday().containsKey(chatId)) {
+        } else if (dao.getBookedForWednesday().containsKey(chatId)) {
             sendMessage.setText("Вы уже записаны на среду!");
 
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
@@ -140,12 +139,7 @@ public class Logic_realisation {
 
             markupInline.setKeyboard(Collections.singletonList(rowInline));
             sendMessage.setReplyMarkup(markupInline);
-        }
-
-
-
-
-        else if ((dao.getMondaySize() < getMondayValueIndicator()) || (dao.getWednesdaySize() < getMondayValueIndicator())) {
+        } else if ((dao.getMondaySize() < getMondayValueIndicator()) || (dao.getWednesdaySize() < getMondayValueIndicator())) {
 
             Calendar calendar = Calendar.getInstance();
             int currentDayOfWeek = calendar.get(Calendar.DAY_OF_WEEK);
@@ -178,10 +172,9 @@ public class Logic_realisation {
             List<InlineKeyboardButton> rowInline2 = new ArrayList<>();
 
             InlineKeyboardButton firstAvvailable = new InlineKeyboardButton();
-            if (getMondayValueIndicator() - dao.getMondaySize() > 0) {
+            if ((getMondayValueIndicator() - dao.getMondaySize() > 0) && (calendar.get(Calendar.HOUR_OF_DAY) < 19 || calendar.get(Calendar.DAY_OF_WEEK) != Calendar.MONDAY)) {
                 firstAvvailable.setText(df.format(nextMonday.getTime()) + (", доступно мест: " + (getMondayValueIndicator() - dao.getMondaySize())));
                 firstAvvailable.setCallbackData("bookForMonday");
-
             } else {
                 firstAvvailable.setText(df.format(calendar.getTime()) + ", свободных мест нет");
                 firstAvvailable.setCallbackData("no_room");
@@ -189,8 +182,7 @@ public class Logic_realisation {
 
             InlineKeyboardButton secondAvvailable = new InlineKeyboardButton();
 
-
-            if (getWednesdayValueIndicator() - dao.getWednesdaySize() > 0) {
+            if ((getWednesdayValueIndicator() - dao.getWednesdaySize()) > 0 && (calendar.get(Calendar.HOUR_OF_DAY) < 19 || calendar.get(Calendar.DAY_OF_WEEK) != Calendar.WEDNESDAY)) {
                 secondAvvailable.setText(df.format(nextWednesday.getTime()) + (", доступно мест: " + (getWednesdayValueIndicator() - dao.getWednesdaySize())));
                 secondAvvailable.setCallbackData("bookForWednesday");
             } else {

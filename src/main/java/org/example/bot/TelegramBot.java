@@ -26,27 +26,35 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class TelegramBot extends TelegramLongPollingBot {
+
+
     Connection connection = DataBase.getConnection();
     private final HashMap<Long, Message> sentMessages = new HashMap<>();
 
     @Override
     public String getBotUsername() {
         return "BarberAssist_bot";
+
     }
 
     @Override
     public String getBotToken() {
         return "7214428459:AAF_rPscG7Q6x3eZa8j5Hj4g-a7KKq4fLSM";
+
     }
 
-    static String key;
+    private final HashMap<Long, String> userKeys = new HashMap<>();
 
-    private String getKey() {
-        return key;
+    private String getKey(Long chatId) {
+        return userKeys.get(chatId);
     }
 
-    public void setKey(String key) {
-        this.key = key;
+    private void setKey(Long chatId, String key) {
+        userKeys.put(chatId, key);
+    }
+
+    private void clearKey(Long chatId) {
+        userKeys.remove(chatId);
     }
 
     PersonDAO dao = new PersonDAO();
@@ -56,7 +64,7 @@ public class TelegramBot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        // Обработка сообщений в отдельном потоке
+
         executorService.submit(() -> {
             handleMessage(update);
         });
@@ -71,16 +79,22 @@ public class TelegramBot extends TelegramLongPollingBot {
         if (update.hasMessage()) {
             chatId = update.getMessage().getChatId();
             sendMessage.setChatId(chatId);
-            if (update.getMessage().getText().equals("hB7$5mG8@z") || update.getMessage().getText().equals("админ")) {
+            if (update.getMessage().getText().equals("купите леново")) {
                 deletePreviousMessage(chatId);
                 forAdmin.onAdminLogin(sendMessage);
-            } else if (update.getMessage().getText().equals("/start")) {
+            }
+            else if (update.getMessage().getText().equals("update")) {
+                Connection connection = DataBase.getConnection();
+
+            }
+            else if (update.getMessage().getText().equals("/start")) {
                 System.out.println(update.getMessage().getChatId());
                 logic.showHelloMessage(sendMessage);
                 deletePreviousMessage(chatId);
 
-            } else if (this.getKey().equals("bookForMonday")) {
-                this.setKey(null);
+            }
+            else if ("bookForMonday".equals(getKey(chatId))) {
+                clearKey(chatId);
                 deletePreviousMessage(chatId);
 
                 Person person = new Person(update.getMessage().getFrom().getUserName(), chatId, update.getMessage().getText());
@@ -89,10 +103,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
-
-
-            } else if (this.getKey().equals("bookForWednesday")) {
-                this.setKey(null);
+            } else if ("bookForWednesday".equals(getKey(chatId))) {
+                clearKey(chatId);
                 deletePreviousMessage(chatId);
 
                 Person person = new Person(update.getMessage().getFrom().getUserName(), chatId, update.getMessage().getText());
@@ -103,27 +115,49 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
 
                 InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-
                 List<InlineKeyboardButton> rowInline = new ArrayList<>();
-
                 InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
                 inlineKeyboardButton1.setText("Назад");
                 inlineKeyboardButton1.setCallbackData("back");
-
                 rowInline.add(inlineKeyboardButton1);
-
                 markupInline.setKeyboard(Collections.singletonList(rowInline));
                 sendMessage.setReplyMarkup(markupInline);
-            } else if (this.getKey().equals("put_person_in_queue")) {
-                this.setKey(null);
-                deletePreviousMessage(chatId);
-
-                Person person = new Person(update.getMessage().getFrom().getUserName(), chatId, update.getMessage().getText());
+            } else if ("put_person_in_queue".equals(getKey(chatId))) {
+                clearKey(chatId);
                 try {
-                    dao.addToAQueue(connection, sendMessage, person);
+                    dao.initializeQueueList(connection);
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
+                deletePreviousMessage(chatId);
+
+                if (dao.getPeopleInQueue().containsKey(chatId)) {
+                    sendMessage.setText("Вы уже стоите в очереди");
+                } else {
+                    Person person = new Person(update.getMessage().getFrom().getUserName(), chatId, update.getMessage().getText());
+                    try {
+                        dao.addToAQueue(connection, sendMessage, person);
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+
+                InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+                List<InlineKeyboardButton> rowInline = new ArrayList<>();
+                InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+                inlineKeyboardButton1.setText("Назад");
+                inlineKeyboardButton1.setCallbackData("back");
+                rowInline.add(inlineKeyboardButton1);
+                markupInline.setKeyboard(Collections.singletonList(rowInline));
+                sendMessage.setReplyMarkup(markupInline);
+            } else if (update.getMessage().getText().equals("отец") || update.getMessage().getText().equals("Отец")) {
+                deletePreviousMessage(chatId);
+
+                SendPhoto sendPhoto = new SendPhoto();
+                sendPhoto.setChatId(chatId);
+                sendPhoto.setPhoto(new InputFile("https://clck.ru/3DMqAE"));
+
+                sendPhoto.setCaption("Все наши клиенты для нас как родные дети");
 
                 InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
 
@@ -136,7 +170,13 @@ public class TelegramBot extends TelegramLongPollingBot {
                 rowInline.add(inlineKeyboardButton1);
 
                 markupInline.setKeyboard(Collections.singletonList(rowInline));
-                sendMessage.setReplyMarkup(markupInline);
+                sendPhoto.setReplyMarkup(markupInline);
+                try {
+                    sentMessages.put(chatId, execute(sendPhoto));
+                } catch (TelegramApiException e) {
+                    throw new RuntimeException(e);
+                }
+
             }
         } else if (update.hasCallbackQuery()) {
             chatId = update.getCallbackQuery().getMessage().getChatId();
@@ -145,8 +185,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             if (update.getCallbackQuery().getData().equals("back")) {
                 deletePreviousMessage(chatId);
                 logic.showHelloMessage(sendMessage);
-            }
-            else if (update.getCallbackQuery().getData().equals("signup")) {
+            } else if (update.getCallbackQuery().getData().equals("signup")) {
                 deletePreviousMessage(chatId);
                 try {
                     dao.initializeLists(connection);
@@ -159,42 +198,51 @@ public class TelegramBot extends TelegramLongPollingBot {
                     throw e;
                 }
 
-            }
-            else if (update.getCallbackQuery().getData().equals("workTime")) {
+            } else if (update.getCallbackQuery().getData().equals("workTime")) {
                 deletePreviousMessage(chatId);
                 logic.showWorkTime(sendMessage);
-            }
-            else if (update.getCallbackQuery().getData().equals("passMonday")) {
+            } else if (update.getCallbackQuery().getData().equals("passMonday")) {
                 deletePreviousMessage(chatId);
                 try {
                     dao.passQueue(sendMessage, connection, chatId, "bookedForMonday");
                 } catch (SQLException e) {
                     System.out.println(e);
                 }
-            }
-            else if (update.getCallbackQuery().getData().equals("passWednesday")) {
+            } else if (update.getCallbackQuery().getData().equals("passWednesday")) {
                 deletePreviousMessage(chatId);
                 try {
                     dao.passQueue(sendMessage, connection, chatId, "bookedForWednesday");
                 } catch (SQLException e) {
                     System.out.println(e);
                 }
-            }
-            else if (update.getCallbackQuery().getData().equals("bookForMonday")) {
+            } else if ("bookForMonday".equals(update.getCallbackQuery().getData())) {
                 deletePreviousMessage(chatId);
                 sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
-                setKey("bookForMonday");
-            }
-            else if (update.getCallbackQuery().getData().equals("back_for_admin")) {
+                setKey(chatId, "bookForMonday");
+            } else if (update.getCallbackQuery().getData().equals("back_for_admin")) {
+                deletePreviousMessage(chatId);
                 forAdmin.onAdminLogin(sendMessage);
-            }
-            else if (update.getCallbackQuery().getData().equals("bookForWednesday")) {
+            } else if ("bookForWednesday".equals(update.getCallbackQuery().getData())) {
                 deletePreviousMessage(chatId);
                 sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи");
-
-                setKey("bookForWednesday");
-            }
-            else if (update.getCallbackQuery().getData().equals("see_the_queue")) {
+                setKey(chatId, "bookForWednesday");
+            } else if (update.getCallbackQuery().getData().equals("next")) {
+                deletePreviousMessage(chatId);
+                sendMessage.setText("Следующий по очереди: ");
+                try {
+                    dao.next(sendMessage, new Person(null, 0, null), connection);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            } else if (update.getCallbackQuery().getData().equals("done")) {
+                deletePreviousMessage(chatId);
+                sendMessage.setText("Следующий по очереди: ");
+                try {
+                    dao.done(sendMessage, new Person(null, 0, null), connection, chatId, this);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+            } else if (update.getCallbackQuery().getData().equals("see_the_queue")) {
                 deletePreviousMessage(chatId);
                 try {
                     dao.initializeLists(connection);
@@ -209,23 +257,34 @@ public class TelegramBot extends TelegramLongPollingBot {
                 }
 
 
-            }
-            else if (update.getCallbackQuery().getData().equals("addToQueue")) {
+            } else if (update.getCallbackQuery().getData().equals("addToQueue")) {
                 deletePreviousMessage(chatId);
                 forAdmin.addToQueue(logic, sendMessage);
 
-            }
-            else if (update.getCallbackQuery().getData().equals("CheckQueue")) {
+            } else if (update.getCallbackQuery().getData().equals("CheckQueue")) {
                 deletePreviousMessage(chatId);
                 forAdmin.CheckQueue(sendMessage);
 
-            }
-            else if (update.getCallbackQuery().getData().equals("put_person_in_queue")) {
-                deletePreviousMessage(chatId);
-                setKey("put_person_in_queue");
+            } else if (update.getCallbackQuery().getData().equals("Work")) {
 
-            }
-            else if (update.getCallbackQuery().getData().equals("portfolio")) {
+                deletePreviousMessage(chatId);
+                forAdmin.showWorkMenu(sendMessage);
+
+            } else if ("put_person_in_queue".equals(update.getCallbackQuery().getData())) {
+                deletePreviousMessage(chatId);
+                try {
+                    dao.initializeQueueList(connection);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+
+                if (dao.getPeopleInQueue().containsKey(chatId)) {
+                    sendMessage.setText("Вы уже стоите в очереди");
+                } else {
+                    sendMessage.setText("Пожалуйста, укажите ваше имя и фамилию для подтверждения записи в очередь");
+                    setKey(chatId, "put_person_in_queue");
+                }
+            } else if (update.getCallbackQuery().getData().equals("portfolio")) {
                 deletePreviousMessage(chatId);
 
                 SendPhoto sendPhoto = new SendPhoto();
@@ -276,4 +335,7 @@ public class TelegramBot extends TelegramLongPollingBot {
             throw new RuntimeException(e);
         }
     }
+
+
 }
+

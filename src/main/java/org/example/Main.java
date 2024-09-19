@@ -7,7 +7,9 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 public class Main {
     public static void main(String[] args) throws TelegramApiException {
+        System.out.println("Version: 1.1");
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
         telegramBotsApi.registerBot(new TelegramBot());
+
     }
 }

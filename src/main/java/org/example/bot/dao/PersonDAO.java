@@ -1,6 +1,5 @@
 package org.example.bot.dao;
 
-import com.fasterxml.jackson.core.JsonEncoding;
 import org.example.bot.Object.Person;
 import org.example.bot.TelegramBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
@@ -18,25 +17,232 @@ import java.util.*;
 public class PersonDAO {
 
 
+    int count;
+    private Person lastPerson = new Person(null, 0, null);
 
-    public Map<?, ?> getBookedForMonday () {
+    public Person getLastPerson() {
+        return lastPerson;
+    }
+
+    public void setLastPerson(Person currentPerson) {
+        this.lastPerson = currentPerson;
+    }
+
+    public void next(SendMessage sendMessage, Person person, Connection connection) throws SQLException {
+
+        Calendar calendar = Calendar.getInstance();
+        Statement statement = connection.createStatement();
+        String dayOfWeek = (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY ? "bookedForMonday" : "bookedForWednesday");
+        String SQL = "select * from " + dayOfWeek + " LIMIT 1";
+        System.out.println(SQL);
+        ResultSet resultSet = statement.executeQuery(SQL);
+        System.out.println("Успешно");
+        while (resultSet.next()) {
+            person.setChatId(resultSet.getLong("chatId"));
+            person.setTelegramUsername(resultSet.getString("telegramUsername"));
+            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
+        }
+
+        if (person.getNameAndSurname() == null && person.getTelegramUsername() == null) {
+            sendMessage.setText("Очередь пуста");
+            System.out.println(person.getChatId());
+        } else {
+            sendMessage.setText("Следующий по очереди:\n\n" + person.toStringForAdmin());
+
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rowsline = new ArrayList<>();
+            List<InlineKeyboardButton> rowInline_1 = new ArrayList<>();
+
+            InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+            inlineKeyboardButton1.setText("назад");
+            inlineKeyboardButton1.setCallbackData("back_for_admin");
+            rowInline_1.add(inlineKeyboardButton1);
+
+            List<InlineKeyboardButton> rowInline_2 = new ArrayList<>();
+            InlineKeyboardButton done = new InlineKeyboardButton();
+            done.setText("Пострижен(а)! 💇🏿‍");
+            done.setCallbackData("done");
+
+            rowInline_2.add(done);
+
+            rowsline.add(rowInline_2);
+            rowsline.add(rowInline_1);
+
+            markupInline.setKeyboard(rowsline);
+            sendMessage.setReplyMarkup(markupInline);
+            lastPerson = person;
+        }
+
+
+    }
+
+    public void notifyUsers(Connection connection, Calendar calendar, SendMessage sendMessage, TelegramBot bot) {
+        if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY) {
+
+
+            for (Map.Entry<Long, Person> entry : bookedForMonday.entrySet()) {
+
+                if (count == 0) {
+                    bot.deletePreviousMessage(entry.getKey());
+                    sendMessage.setChatId(entry.getKey());
+                    sendMessage.setText("Спасибо за визит! \uD83D\uDE0A Надеемся, что ваша новая стрижка " +
+                            "вам понравилась. \uD83D\uDC87\u200D♂\uFE0F Если у вас есть какие-либо вопросы или пожелания, не" +
+                            " стесняйтесь обращаться к нам. \uD83D\uDCDE" +
+                            " Не забудьте записаться на следующую стрижку. " +
+                            "Ждем вас снова! \uD83D\uDC87\u200D♀\uFE0F");
+                    count++;
+                    try {
+                        bot.execute(sendMessage);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    bot.deletePreviousMessage(entry.getKey());
+                    sendMessage.setChatId(entry.getKey());
+                    sendMessage.setText("Ваша очередь стала ближе!\n\nваша позиция в очереди: " + count);
+                    try {
+                        bot.execute(sendMessage);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                    count++;
+                }
+            }
+            count = 0;
+        } else if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.WEDNESDAY) {
+
+            for (Map.Entry<Long, Person> entry : bookedForWednesday.entrySet()) {
+
+                if (count == 0) {
+                    sendMessage.setChatId(entry.getKey());
+                    sendMessage.setText("Спасибо за визит! \uD83D\uDE0A Надеемся, что ваша новая стрижка " +
+                            "вам понравилась. \uD83D\uDC87\u200D♂\uFE0F Если у вас есть какие-либо вопросы или пожелания, не" +
+                            " стесняйтесь обращаться к нам. \uD83D\uDCDE" +
+                            " Не забудьте записаться на следующую стрижку. " +
+                            "Ждем вас снова! \uD83D\uDC87\u200D♀\uFE0F");
+                    count++;
+                    try {
+                        bot.execute(sendMessage);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else {
+                    sendMessage.setChatId(entry.getKey());
+                    sendMessage.setText("Ваша очередь стала ближе!\n\nваша позиция в очереди: " + count);
+                    try {
+                        bot.execute(sendMessage);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                    count++;
+                }
+            }
+            count = 0;
+        }
+
+
+    }
+
+    public void done(SendMessage sendMessage, Person person, Connection connection, Long chatId, TelegramBot bot) throws SQLException {
+        bot.deletePreviousMessage(chatId);
+        Calendar calendar = Calendar.getInstance();
+        Statement statement = connection.createStatement();
+
+
+        String dayOfWeek = (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY ? "bookedForMonday" : "bookedForWednesday");
+        String SQL = "delete from " + dayOfWeek + "\n" + "where chatId = " + lastPerson.getChatId();
+        initializeLists(connection);
+        notifyUsers(connection, calendar, sendMessage, bot);
+        sendMessage.setChatId(chatId);
+        int res = statement.executeUpdate(SQL);
+        System.out.println(SQL);
+
+        SQL = "select * from " + dayOfWeek + " LIMIT 1";
+        System.out.println(SQL);
+        ResultSet resultSet = statement.executeQuery(SQL);
+        System.out.println("Успешно");
+        while (resultSet.next()) {
+            person.setChatId(resultSet.getLong("chatId"));
+            person.setTelegramUsername(resultSet.getString("telegramUsername"));
+            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
+        }
+
+        if (person.getNameAndSurname() == null && person.getTelegramUsername() == null) {
+            sendMessage.setText("Очередь пуста");
+            System.out.println(person.getChatId());
+        } else {
+
+            sendMessage.setText("Следующий по очереди:\n\n" + person.toStringForAdmin());
+
+            InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+            List<List<InlineKeyboardButton>> rowsline = new ArrayList<>();
+            List<InlineKeyboardButton> rowInline_1 = new ArrayList<>();
+
+            InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+            inlineKeyboardButton1.setText("назад");
+            inlineKeyboardButton1.setCallbackData("back_for_admin");
+            rowInline_1.add(inlineKeyboardButton1);
+
+            List<InlineKeyboardButton> rowInline_2 = new ArrayList<>();
+            InlineKeyboardButton done = new InlineKeyboardButton();
+            done.setText("Пострижен(а)! 💇🏿‍");
+            done.setCallbackData("done");
+
+            rowInline_2.add(done);
+
+            rowsline.add(rowInline_2);
+            rowsline.add(rowInline_1);
+
+            markupInline.setKeyboard(rowsline);
+            sendMessage.setReplyMarkup(markupInline);
+            lastPerson = person;
+        }
+
+    }
+
+    public Map<?, ?> getBookedForMonday() {
         return bookedForMonday;
     }
 
-    public Map<?, ?> getBookedForWednesday () {
+    public Map<?, ?> getBookedForWednesday() {
         return bookedForWednesday;
     }
 
-    public Map<?, ?> setBookedForWednesday () {
+    public Map<?, ?> setBookedForWednesday() {
         return bookedForMonday;
     }
 
     Map<Long, Person> bookedForMonday;
     Map<Long, Person> bookedForWednesday;
+    Map<Long, Person> peopleInQueue;
+
+    public Map<Long, Person> getPeopleInQueue() {
+        return peopleInQueue;
+    }
+
+    public void initializeQueueList(Connection connection) throws SQLException {
+        peopleInQueue = new LinkedHashMap<>();
+
+        Statement statement = connection.createStatement();
+        String SQL = "SELECT * FROM peopleInQueue";
+        System.out.println(SQL);
+        ResultSet resultSet = statement.executeQuery(SQL);
+
+        while (resultSet.next()) {
+            Person person = new Person();
+
+            person.setChatId(resultSet.getLong("chatId"));
+            person.setTelegramUsername(resultSet.getString("telegramUsername"));
+            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
+            peopleInQueue.put(person.getChatId(), person);
+
+        }
+
+
+    }
 
 
     public void addToAQueue(Connection connection, SendMessage sendMessage, Person person) throws SQLException {
-
         Statement statement = null;
         try {
             statement = connection.createStatement();
@@ -59,7 +265,7 @@ public class PersonDAO {
 
     }
 
-    public void passQueue (SendMessage sendMessage, Connection connection, long chatId, String table) throws SQLException {
+    public void passQueue(SendMessage sendMessage, Connection connection, long chatId, String table) throws SQLException {
         Statement statement = connection.createStatement();
         String SQL = "Delete from " + table + " \nwhere chatId = " + chatId;
         System.out.println(SQL);
@@ -81,12 +287,11 @@ public class PersonDAO {
         sendMessage.setReplyMarkup(markupInline);
 
 
-
     }
 
     public void initializeLists(Connection connection) throws SQLException {
-        bookedForMonday = new HashMap<>();
-        bookedForWednesday = new HashMap<>();
+        bookedForMonday = new LinkedHashMap<>();
+        bookedForWednesday = new LinkedHashMap<>();
 
         Statement statement = connection.createStatement();
         String SQL = "SELECT * FROM bookedForMonday";
@@ -114,13 +319,6 @@ public class PersonDAO {
         }
 
     }
-
-    private long chatId;
-
-    private int serialIdForMonday;
-
-
-
 
 
     public void addNewUserForMonday(Person person, Connection connection, SendMessage sendMessage) throws SQLException {
@@ -165,6 +363,7 @@ public class PersonDAO {
     public int getWednesdaySize() {
         return bookedForWednesday.size();
     }
+    //private final HashMap<Long, Message> sentToAdmin = new HashMap<>();
 
     public void seeTheQueue(SendMessage sendMessage, TelegramBot bot) {
         if (!bookedForMonday.isEmpty()) {
@@ -183,7 +382,8 @@ public class PersonDAO {
                     throw new RuntimeException(e);
                 }
             }
-        } else if (!bookedForWednesday.isEmpty()) {
+        }
+        if (!bookedForWednesday.isEmpty()) {
             sendMessage.setText("Записались на среду:");
             try {
                 bot.execute(sendMessage);
@@ -202,9 +402,6 @@ public class PersonDAO {
         }
 
 
-
-
-
         sendMessage.setText("Меню: ");
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
 
@@ -219,6 +416,6 @@ public class PersonDAO {
         markupInline.setKeyboard(Collections.singletonList(rowInline));
         sendMessage.setReplyMarkup(markupInline);
 
-
     }
+
 }

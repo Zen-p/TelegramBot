@@ -56,6 +56,6 @@ public class Person {
     }
 
     public String toStringForAdmin() {
-        return ("telegram Username: @" + this.getTelegramUsername() + "\nname and surname: " + nameAndSurname + "\n___________________________________");
+        return ("Ник в телеграм: @" + this.getTelegramUsername() + "\nИмя и фамилия: " + nameAndSurname + "\n___________________________________");
     }
 }

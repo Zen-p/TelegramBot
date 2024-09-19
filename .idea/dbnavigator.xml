@@ -28,9 +28,7 @@ where chatId = 6634582750]]></console>
     <last-used-providers />
   </component>
   <component name="DBNavigator.Project.DatabaseFileManager">
-    <open-files>
-      <object connection-id="48f013fd-89dc-471c-bd1a-d328ea6f3daf" object-ref="consoles/Connection" />
-    </open-files>
+    <open-files />
   </component>
   <component name="DBNavigator.Project.DatabaseSessionManager">
     <connection id="48f013fd-89dc-471c-bd1a-d328ea6f3daf" />
