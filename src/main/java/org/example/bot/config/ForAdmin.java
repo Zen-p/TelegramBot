@@ -1,8 +1,6 @@
 package org.example.bot.config;
 
-import org.example.bot.dao.PersonDAO;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMarkup;
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 
@@ -38,7 +36,7 @@ public class ForAdmin {
 
     }
 
-    public void CheckQueue (SendMessage sendMessage) {
+    public void CheckQueue(SendMessage sendMessage) {
         sendMessage.setText("Раздел управления очередью");
 
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
@@ -72,7 +70,7 @@ public class ForAdmin {
 
     }
 
-    public void addToQueue (Logic_realisation logic, SendMessage sendMessage) {
+    public void addToQueue(Logic_realisation logic, SendMessage sendMessage) {
         Calendar calendar = Calendar.getInstance();
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
         List<InlineKeyboardButton> rowInline_1 = new ArrayList<>();
@@ -86,25 +84,22 @@ public class ForAdmin {
         markupInline.setKeyboard(Collections.singletonList(rowInline_1));
         sendMessage.setReplyMarkup(markupInline);
 
-        if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY){
+        if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY) {
             logic.setMondayValueIndicator((byte) 6);
             sendMessage.setText("Добавлено место на понедельник");
 
 
-
-
-        } else if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.WEDNESDAY){
+        } else if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.WEDNESDAY) {
             logic.setWednesdayValueIndicator((byte) 6);
             sendMessage.setText("Добавлено место на среду");
 
-        }
-        else {
+        } else {
             sendMessage.setText("Добавление дополнительных мест доступно только в рабочий день!");
 
         }
     }
 
-    public void showWorkMenu (SendMessage sendMessage) {
+    public void showWorkMenu(SendMessage sendMessage) {
         sendMessage.setText("Рабочее пространство: ");
 
         InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
@@ -134,8 +129,6 @@ public class ForAdmin {
         sendMessage.setReplyMarkup(markupInline);
 
     }
-
-
 
 
 }

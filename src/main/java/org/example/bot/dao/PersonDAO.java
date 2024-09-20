@@ -15,17 +15,100 @@ import java.util.*;
 
 
 public class PersonDAO {
-
-
     int count;
+
+    Map<Long, Person> bookedForMonday;
+    Map<Long, Person> bookedForWednesday;
+    Map<Long, Person> peopleInQueue;
     private Person lastPerson = new Person(null, 0, null);
 
-    public Person getLastPerson() {
-        return lastPerson;
+    public Map<?, ?> getBookedForMonday() {
+        return bookedForMonday;
+    }
+    public Map<?, ?> getBookedForWednesday() {
+        return bookedForWednesday;
+    }
+    public Map<Long, Person> getPeopleInQueue() {
+        return peopleInQueue;
+    }
+    public int getMondaySize() {
+        return bookedForMonday.size();
+    }
+    public int getWednesdaySize() {
+        return bookedForWednesday.size();
     }
 
-    public void setLastPerson(Person currentPerson) {
-        this.lastPerson = currentPerson;
+    public void addToAQueue(Connection connection, SendMessage sendMessage, Person person) throws SQLException {
+        Statement statement = null;
+        try {
+            statement = connection.createStatement();
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+        String SQL = "INSERT INTO peopleInQueue VALUES(" + person.getChatId() + ", \"" + person.getTelegramUsername() + "\", \"" + person.getNameAndSurname() + "\")";
+        System.out.println(SQL);
+        statement.executeUpdate(SQL);
+        sendMessage.setText("Вы стали в очередь!\n При появлении свободных мест вы будете уведомлены");
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+        inlineKeyboardButton1.setText("Назад");
+        inlineKeyboardButton1.setCallbackData("back");
+        rowInline.add(inlineKeyboardButton1);
+        markupInline.setKeyboard(Collections.singletonList(rowInline));
+        sendMessage.setReplyMarkup(markupInline);
+
+
+    }
+
+    public void initializeQueueList(Connection connection) throws SQLException {
+        peopleInQueue = new LinkedHashMap<>();
+
+        Statement statement = connection.createStatement();
+        String SQL = "SELECT * FROM peopleInQueue";
+        System.out.println(SQL);
+        ResultSet resultSet = statement.executeQuery(SQL);
+
+        while (resultSet.next()) {
+            Person person = new Person();
+
+            person.setChatId(resultSet.getLong("chatId"));
+            person.setTelegramUsername(resultSet.getString("telegramUsername"));
+            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
+            peopleInQueue.put(person.getChatId(), person);
+
+        }
+
+    }
+    public void initializeLists(Connection connection) throws SQLException {
+        bookedForMonday = new LinkedHashMap<>();
+        bookedForWednesday = new LinkedHashMap<>();
+
+        Statement statement = connection.createStatement();
+        String SQL = "SELECT * FROM bookedForMonday";
+        System.out.println(SQL);
+        ResultSet resultSet = statement.executeQuery(SQL);
+
+        while (resultSet.next()) {
+            Person person = new Person();
+
+            person.setChatId(resultSet.getLong("chatId"));
+            person.setTelegramUsername(resultSet.getString("telegramUsername"));
+            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
+            bookedForMonday.put(person.getChatId(), person);
+        }
+
+        SQL = "SELECT * FROM bookedForWednesday";
+        resultSet = statement.executeQuery(SQL);
+        while (resultSet.next()) {
+            Person person = new Person();
+            person.setChatId(resultSet.getLong("chatId"));
+            person.setTelegramUsername(resultSet.getString("telegramUsername"));
+            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
+            bookedForWednesday.put(person.getChatId(), person);
+
+        }
+
     }
 
     public void next(SendMessage sendMessage, Person person, Connection connection, TelegramBot bot, Long chatId) throws SQLException {
@@ -92,8 +175,7 @@ public class PersonDAO {
 
 
     }
-
-    public void notifyUsers(Connection connection, Calendar calendar, SendMessage sendMessage, TelegramBot bot) throws TelegramApiException {
+    public void notifyUsers(Calendar calendar, SendMessage sendMessage, TelegramBot bot) throws TelegramApiException {
         if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY) {
 
 
@@ -172,7 +254,6 @@ public class PersonDAO {
 
 
     }
-
     public void done(SendMessage sendMessage, Person person, Connection connection, Long chatId, TelegramBot bot) throws SQLException, TelegramApiException {
         bot.deletePreviousMessage(chatId);
         Calendar calendar = Calendar.getInstance();
@@ -182,7 +263,7 @@ public class PersonDAO {
         String dayOfWeek = (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY ? "bookedForMonday" : "bookedForWednesday");
         String SQL = "delete from " + dayOfWeek + "\n" + "where chatId = " + lastPerson.getChatId();
         initializeLists(connection);
-        notifyUsers(connection, calendar, sendMessage, bot);
+        notifyUsers(calendar, sendMessage, bot);
         sendMessage.setChatId(chatId);
         int res = statement.executeUpdate(SQL);
         System.out.println(SQL);
@@ -230,126 +311,6 @@ public class PersonDAO {
 
     }
 
-    public Map<?, ?> getBookedForMonday() {
-        return bookedForMonday;
-    }
-
-    public Map<?, ?> getBookedForWednesday() {
-        return bookedForWednesday;
-    }
-
-    public Map<?, ?> setBookedForWednesday() {
-        return bookedForMonday;
-    }
-
-    Map<Long, Person> bookedForMonday;
-    Map<Long, Person> bookedForWednesday;
-    Map<Long, Person> peopleInQueue;
-
-    public Map<Long, Person> getPeopleInQueue() {
-        return peopleInQueue;
-    }
-
-    public void initializeQueueList(Connection connection) throws SQLException {
-        peopleInQueue = new LinkedHashMap<>();
-
-        Statement statement = connection.createStatement();
-        String SQL = "SELECT * FROM peopleInQueue";
-        System.out.println(SQL);
-        ResultSet resultSet = statement.executeQuery(SQL);
-
-        while (resultSet.next()) {
-            Person person = new Person();
-
-            person.setChatId(resultSet.getLong("chatId"));
-            person.setTelegramUsername(resultSet.getString("telegramUsername"));
-            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
-            peopleInQueue.put(person.getChatId(), person);
-
-        }
-
-    }
-
-
-    public void addToAQueue(Connection connection, SendMessage sendMessage, Person person) throws SQLException {
-        Statement statement = null;
-        try {
-            statement = connection.createStatement();
-        } catch (SQLException e) {
-            throw new RuntimeException(e);
-        }
-        String SQL = "INSERT INTO peopleInQueue VALUES(" + person.getChatId() + ", \"" + person.getTelegramUsername() + "\", \"" + person.getNameAndSurname() + "\")";
-        System.out.println(SQL);
-        statement.executeUpdate(SQL);
-        sendMessage.setText("Вы стали в очередь!\n При появлении свободных мест вы будете уведомлены");
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
-        inlineKeyboardButton1.setText("Назад");
-        inlineKeyboardButton1.setCallbackData("back");
-        rowInline.add(inlineKeyboardButton1);
-        markupInline.setKeyboard(Collections.singletonList(rowInline));
-        sendMessage.setReplyMarkup(markupInline);
-
-
-    }
-
-    public void passQueue(SendMessage sendMessage, Connection connection, long chatId, String table) throws SQLException {
-        Statement statement = connection.createStatement();
-        String SQL = "Delete from " + table + " \nwhere chatId = " + chatId;
-        System.out.println(SQL);
-        int resultSet = statement.executeUpdate(SQL);
-        System.out.println("прошло");
-        sendMessage.setText("Вы покинули очередь!");
-        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
-
-        List<InlineKeyboardButton> rowInline = new ArrayList<>();
-
-        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
-
-        inlineKeyboardButton1.setText("Назад");
-        inlineKeyboardButton1.setCallbackData("back");
-
-        rowInline.add(inlineKeyboardButton1);
-
-        markupInline.setKeyboard(Collections.singletonList(rowInline));
-        sendMessage.setReplyMarkup(markupInline);
-
-
-    }
-
-    public void initializeLists(Connection connection) throws SQLException {
-        bookedForMonday = new LinkedHashMap<>();
-        bookedForWednesday = new LinkedHashMap<>();
-
-        Statement statement = connection.createStatement();
-        String SQL = "SELECT * FROM bookedForMonday";
-        System.out.println(SQL);
-        ResultSet resultSet = statement.executeQuery(SQL);
-
-        while (resultSet.next()) {
-            Person person = new Person();
-
-            person.setChatId(resultSet.getLong("chatId"));
-            person.setTelegramUsername(resultSet.getString("telegramUsername"));
-            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
-            bookedForMonday.put(person.getChatId(), person);
-        }
-
-        SQL = "SELECT * FROM bookedForWednesday";
-        resultSet = statement.executeQuery(SQL);
-        while (resultSet.next()) {
-            Person person = new Person();
-            person.setChatId(resultSet.getLong("chatId"));
-            person.setTelegramUsername(resultSet.getString("telegramUsername"));
-            person.setNameAndSurname(resultSet.getString("nameAndSurname"));
-            bookedForWednesday.put(person.getChatId(), person);
-
-        }
-
-    }
-
-
     public void addNewUserForMonday(Person person, Connection connection, SendMessage sendMessage) throws SQLException {
 
         Statement statement = connection.createStatement();
@@ -372,7 +333,6 @@ public class PersonDAO {
         sendMessage.setReplyMarkup(markupInline);
 
     }
-
     public void addNewUserForWednesday(Person person, Connection connection, SendMessage sendMessage) throws SQLException {
 
         Statement statement = connection.createStatement();
@@ -384,16 +344,7 @@ public class PersonDAO {
 
     }
 
-
-    public int getMondaySize() {
-        return bookedForMonday.size();
-    }
-
-    public int getWednesdaySize() {
-        return bookedForWednesday.size();
-    }
-
-    public void seeTheQueue(SendMessage sendMessage, TelegramBot bot) throws TelegramApiException {
+    public void seeTheQueue(SendMessage sendMessage, TelegramBot bot) {
         if (!bookedForMonday.isEmpty()) {
             sendMessage.setText("Записались на понедельник:");
             try {
@@ -446,6 +397,28 @@ public class PersonDAO {
 
 
     }
+    public void passQueue(SendMessage sendMessage, Connection connection, long chatId, String table) throws SQLException {
+        Statement statement = connection.createStatement();
+        String SQL = "Delete from " + table + " \nwhere chatId = " + chatId;
+        System.out.println(SQL);
+        int resultSet = statement.executeUpdate(SQL);
+        System.out.println("прошло");
+        sendMessage.setText("Вы покинули очередь!");
+        InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
 
+        List<InlineKeyboardButton> rowInline = new ArrayList<>();
+
+        InlineKeyboardButton inlineKeyboardButton1 = new InlineKeyboardButton();
+
+        inlineKeyboardButton1.setText("Назад");
+        inlineKeyboardButton1.setCallbackData("back");
+
+        rowInline.add(inlineKeyboardButton1);
+
+        markupInline.setKeyboard(Collections.singletonList(rowInline));
+        sendMessage.setReplyMarkup(markupInline);
+
+
+    }
 
 }
