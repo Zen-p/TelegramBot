@@ -18,12 +18,10 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.sql.Connection;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 public class TelegramBot extends TelegramLongPollingBot {
 
@@ -61,10 +59,11 @@ public class TelegramBot extends TelegramLongPollingBot {
     long chatId;
     Logic_realisation logic = new Logic_realisation();
     private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // 10 потоков
+    SendMessage sendMessage = new SendMessage();
 
     @Override
     public void onUpdateReceived(Update update) {
-
+        sendMessage = new SendMessage();
         executorService.submit(() -> {
             handleMessage(update);
         });
@@ -74,26 +73,21 @@ public class TelegramBot extends TelegramLongPollingBot {
         ForAdmin forAdmin = new ForAdmin();
 
 
-        SendMessage sendMessage = new SendMessage();
-
         if (update.hasMessage()) {
             chatId = update.getMessage().getChatId();
             sendMessage.setChatId(chatId);
             if (update.getMessage().getText().equals("купите леново")) {
                 deletePreviousMessage(chatId);
                 forAdmin.onAdminLogin(sendMessage);
-            }
-            else if (update.getMessage().getText().equals("update")) {
+            } else if (update.getMessage().getText().equals("update")) {
                 Connection connection = DataBase.getConnection();
 
-            }
-            else if (update.getMessage().getText().equals("/start")) {
+            } else if (update.getMessage().getText().equals("/start")) {
                 System.out.println(update.getMessage().getChatId());
                 logic.showHelloMessage(sendMessage);
                 deletePreviousMessage(chatId);
 
-            }
-            else if ("bookForMonday".equals(getKey(chatId))) {
+            } else if ("bookForMonday".equals(getKey(chatId))) {
                 clearKey(chatId);
                 deletePreviousMessage(chatId);
 
@@ -230,7 +224,7 @@ public class TelegramBot extends TelegramLongPollingBot {
                 deletePreviousMessage(chatId);
                 sendMessage.setText("Следующий по очереди: ");
                 try {
-                    dao.next(sendMessage, new Person(null, 0, null), connection);
+                    dao.next(sendMessage, new Person(null, 0, null), connection, this, chatId);
                 } catch (SQLException e) {
                     throw new RuntimeException(e);
                 }
@@ -336,6 +330,40 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
     }
 
+
+    public void checkIfQueueAvailable() {
+
+        try {
+            dao.initializeQueueList(connection);
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+
+        Calendar calendar = Calendar.getInstance();
+
+        while (true) {
+
+
+            if (Calendar.TUESDAY == calendar.get(Calendar.DAY_OF_WEEK) || Calendar.THURSDAY == calendar.get(Calendar.DAY_OF_WEEK)) {
+                for (Map.Entry entry : dao.getPeopleInQueue().entrySet()) {
+                    sendMessage.setText("Запись в вновь доступна!");
+                    sendMessage.setChatId((Long) entry.getKey());
+                    try {
+                        this.execute(sendMessage);
+                    } catch (TelegramApiException e) {
+                        System.out.println(e);
+                    }
+                }
+            }
+
+            try {
+                TimeUnit.HOURS.sleep(4);
+            } catch (InterruptedException e) {
+                System.out.println(e);
+            }
+        }
+
+    }
 
 }
 

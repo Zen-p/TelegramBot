@@ -7,9 +7,26 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 public class Main {
     public static void main(String[] args) throws TelegramApiException {
-        System.out.println("Version: 1.1");
+        System.out.println("Version: 1.1.1");
+        TelegramBot bot = new TelegramBot();
+        Thread checker = new Thread(new TimeChecker(bot));
+        checker.start();
         TelegramBotsApi telegramBotsApi = new TelegramBotsApi(DefaultBotSession.class);
-        telegramBotsApi.registerBot(new TelegramBot());
 
+        telegramBotsApi.registerBot(new TelegramBot());
+    }
+}
+
+
+class TimeChecker implements Runnable{
+    TelegramBot bot;
+
+    public TimeChecker(TelegramBot bot) {
+        this.bot = bot;
+    }
+
+    @Override
+    public void run () {
+        bot.checkIfQueueAvailable();
     }
 }

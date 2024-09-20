@@ -28,7 +28,7 @@ public class PersonDAO {
         this.lastPerson = currentPerson;
     }
 
-    public void next(SendMessage sendMessage, Person person, Connection connection) throws SQLException {
+    public void next(SendMessage sendMessage, Person person, Connection connection, TelegramBot bot, Long chatId) throws SQLException {
 
         Calendar calendar = Calendar.getInstance();
         Statement statement = connection.createStatement();
@@ -47,6 +47,22 @@ public class PersonDAO {
             sendMessage.setText("Очередь пуста");
             System.out.println(person.getChatId());
         } else {
+
+
+            sendMessage.setText("Брат, ща тебя постригут — по красоте будет! \n" +
+                    "Парикмахер уже руку набил, ножницы как автомат стреляют. Ты только не дергайся, а то сейчас тебя, как барана на живую, подстригут, и будешь ровный как футбольное поле, понял? \n" +
+                    "В кресло садись, не тупи, выходишь потом как босс, все оглядываться будут!");
+            sendMessage.setChatId(person.getChatId());
+            try {
+                bot.execute(sendMessage);
+                System.out.println("сообщение о начале работы отправлено");
+            } catch (TelegramApiException e) {
+                throw new RuntimeException(e);
+            }
+
+            sendMessage.setChatId(chatId);
+
+
             sendMessage.setText("Следующий по очереди:\n\n" + person.toStringForAdmin());
 
             InlineKeyboardMarkup markupInline = new InlineKeyboardMarkup();
@@ -62,6 +78,7 @@ public class PersonDAO {
             InlineKeyboardButton done = new InlineKeyboardButton();
             done.setText("Пострижен(а)! 💇🏿‍");
             done.setCallbackData("done");
+
 
             rowInline_2.add(done);
 
@@ -90,6 +107,19 @@ public class PersonDAO {
                             " стесняйтесь обращаться к нам. \uD83D\uDCDE" +
                             " Не забудьте записаться на следующую стрижку. " +
                             "Ждем вас снова! \uD83D\uDC87\u200D♀\uFE0F");
+                    count++;
+                    try {
+                        bot.execute(sendMessage);
+                    } catch (TelegramApiException e) {
+                        throw new RuntimeException(e);
+                    }
+                } else if (count == 1) {
+                    bot.deletePreviousMessage(entry.getKey());
+                    sendMessage.setChatId(entry.getKey());
+                    sendMessage.setText("Брат, ща тебя постригут — по красоте будет! \n" +
+                            "Парикмахер уже руку набил, ножницы как автомат стреляют. Ты только не дергайся, а то сейчас тебя, как барана " +
+                            "на живую, подстригут, и будешь ровный как футбольное поле, понял? \n" +
+                            "В кресло садись, не тупи, выходишь потом как босс, все оглядываться будут!");
                     count++;
                     try {
                         bot.execute(sendMessage);
@@ -363,7 +393,6 @@ public class PersonDAO {
     public int getWednesdaySize() {
         return bookedForWednesday.size();
     }
-    //private final HashMap<Long, Message> sentToAdmin = new HashMap<>();
 
     public void seeTheQueue(SendMessage sendMessage, TelegramBot bot) {
         if (!bookedForMonday.isEmpty()) {
@@ -417,5 +446,6 @@ public class PersonDAO {
         sendMessage.setReplyMarkup(markupInline);
 
     }
+
 
 }
