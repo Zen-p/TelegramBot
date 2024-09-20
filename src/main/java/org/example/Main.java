@@ -7,7 +7,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 
 public class Main {
     public static void main(String[] args) throws TelegramApiException {
-        System.out.println("Version: 1.1.1");
+        System.out.println("Version: 1.3");
         TelegramBot bot = new TelegramBot();
         Thread checker = new Thread(new TimeChecker(bot));
         checker.start();

@@ -93,7 +93,7 @@ public class PersonDAO {
 
     }
 
-    public void notifyUsers(Connection connection, Calendar calendar, SendMessage sendMessage, TelegramBot bot) {
+    public void notifyUsers(Connection connection, Calendar calendar, SendMessage sendMessage, TelegramBot bot) throws TelegramApiException {
         if (calendar.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY) {
 
 
@@ -173,7 +173,7 @@ public class PersonDAO {
 
     }
 
-    public void done(SendMessage sendMessage, Person person, Connection connection, Long chatId, TelegramBot bot) throws SQLException {
+    public void done(SendMessage sendMessage, Person person, Connection connection, Long chatId, TelegramBot bot) throws SQLException, TelegramApiException {
         bot.deletePreviousMessage(chatId);
         Calendar calendar = Calendar.getInstance();
         Statement statement = connection.createStatement();
@@ -267,7 +267,6 @@ public class PersonDAO {
             peopleInQueue.put(person.getChatId(), person);
 
         }
-
 
     }
 
@@ -394,11 +393,11 @@ public class PersonDAO {
         return bookedForWednesday.size();
     }
 
-    public void seeTheQueue(SendMessage sendMessage, TelegramBot bot) {
+    public void seeTheQueue(SendMessage sendMessage, TelegramBot bot) throws TelegramApiException {
         if (!bookedForMonday.isEmpty()) {
             sendMessage.setText("Записались на понедельник:");
             try {
-                bot.execute(sendMessage);
+                bot.getListOfMessages().add(bot.execute(sendMessage));
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
@@ -406,7 +405,7 @@ public class PersonDAO {
             for (Person p : bookedForMonday.values()) {
                 sendMessage.setText(p.toStringForAdmin());
                 try {
-                    bot.execute(sendMessage);
+                    bot.getListOfMessages().add(bot.execute(sendMessage));
                 } catch (TelegramApiException e) {
                     throw new RuntimeException(e);
                 }
@@ -415,7 +414,7 @@ public class PersonDAO {
         if (!bookedForWednesday.isEmpty()) {
             sendMessage.setText("Записались на среду:");
             try {
-                bot.execute(sendMessage);
+                bot.getListOfMessages().add(bot.execute(sendMessage));
             } catch (TelegramApiException e) {
                 throw new RuntimeException(e);
             }
@@ -423,7 +422,7 @@ public class PersonDAO {
             for (Person p : bookedForWednesday.values()) {
                 sendMessage.setText(p.toStringForAdmin());
                 try {
-                    bot.execute(sendMessage);
+                    bot.getListOfMessages().add(bot.execute(sendMessage));
                 } catch (TelegramApiException e) {
                     throw new RuntimeException(e);
                 }
@@ -444,6 +443,7 @@ public class PersonDAO {
 
         markupInline.setKeyboard(Collections.singletonList(rowInline));
         sendMessage.setReplyMarkup(markupInline);
+
 
     }
 

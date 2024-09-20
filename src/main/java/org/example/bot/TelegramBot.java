@@ -25,23 +25,29 @@ import java.util.concurrent.TimeUnit;
 
 public class TelegramBot extends TelegramLongPollingBot {
 
-
-    Connection connection = DataBase.getConnection();
-    private final HashMap<Long, Message> sentMessages = new HashMap<>();
-
     @Override
     public String getBotUsername() {
         return "BarberAssist_bot";
-
     }
 
     @Override
     public String getBotToken() {
         return "7214428459:AAF_rPscG7Q6x3eZa8j5Hj4g-a7KKq4fLSM";
-
     }
 
+    Connection connection = DataBase.getConnection();
+    private final HashMap<Long, Message> sentMessages = new HashMap<>();
     private final HashMap<Long, String> userKeys = new HashMap<>();
+    PersonDAO dao = new PersonDAO();
+    long chatId;
+    Logic_realisation logic = new Logic_realisation();
+    private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // 10 потоков
+    SendMessage sendMessage = new SendMessage();
+    List<Message> listOfMessages = new ArrayList<>();
+
+    public List<Message> getListOfMessages() {
+        return listOfMessages;
+    }
 
     private String getKey(Long chatId) {
         return userKeys.get(chatId);
@@ -55,21 +61,20 @@ public class TelegramBot extends TelegramLongPollingBot {
         userKeys.remove(chatId);
     }
 
-    PersonDAO dao = new PersonDAO();
-    long chatId;
-    Logic_realisation logic = new Logic_realisation();
-    private final ExecutorService executorService = Executors.newFixedThreadPool(10);  // 10 потоков
-    SendMessage sendMessage = new SendMessage();
 
     @Override
     public void onUpdateReceived(Update update) {
         sendMessage = new SendMessage();
         executorService.submit(() -> {
-            handleMessage(update);
+            try {
+                handleMessage(update);
+            } catch (TelegramApiException e) {
+                System.out.println(e);
+            }
         });
     }
 
-    private void handleMessage(Update update) {
+    private void handleMessage(Update update) throws TelegramApiException {
         ForAdmin forAdmin = new ForAdmin();
 
 
@@ -301,6 +306,8 @@ public class TelegramBot extends TelegramLongPollingBot {
                 sendPhoto.setReplyMarkup(markupInline);
                 try {
                     sentMessages.put(chatId, execute(sendPhoto));
+
+
                 } catch (TelegramApiException e) {
                     throw new RuntimeException(e);
                 }
@@ -308,25 +315,38 @@ public class TelegramBot extends TelegramLongPollingBot {
         }
 
         try {
-            sentMessages.put(chatId, execute(sendMessage));
+            if (listOfMessages.isEmpty()) {
+                sentMessages.put(chatId, execute(sendMessage));
+            }
+            else listOfMessages.add(execute(sendMessage));
+
         } catch (TelegramApiException e) {
             throw new RuntimeException(e);
         }
     }
 
-    public void deletePreviousMessage(long chatId) {
+    public void deletePreviousMessage(long chatId) throws TelegramApiException {
+
+
         Message sent = sentMessages.get(chatId);
-        if (sent == null) {
+        if (sent == null && listOfMessages.isEmpty()) {
             return;
         }
         DeleteMessage deleteMessage = new DeleteMessage();
-        deleteMessage.setMessageId(sent.getMessageId());
+
         deleteMessage.setChatId(chatId);
-        try {
+        if (!(listOfMessages.isEmpty())) {
+            for (Message message : listOfMessages) {
+
+                deleteMessage.setMessageId(message.getMessageId());
+                execute(deleteMessage);
+            }
+
+            listOfMessages.clear();
+        } else {
+            deleteMessage.setMessageId(sent.getMessageId());
             execute(deleteMessage);
             sentMessages.put(chatId, null);
-        } catch (TelegramApiException e) {
-            throw new RuntimeException(e);
         }
     }
 
